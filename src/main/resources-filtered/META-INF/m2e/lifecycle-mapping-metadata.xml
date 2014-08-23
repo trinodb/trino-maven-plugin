@@ -1,0 +1,17 @@
+<lifecycleMappingMetadata>
+  <pluginExecutions>
+    <pluginExecution>
+      <pluginExecutionFilter>
+        <groupId>com.facebook.presto</groupId>
+        <artifactId>presto-maven-plugin</artifactId>
+        <versionRange>[${project.version},)</versionRange>
+        <goals>
+          <goal>presto-service-descriptor-generator</goal>
+        </goals>
+      </pluginExecutionFilter>
+      <action>
+        <execute></execute>
+      </action>
+    </pluginExecution>
+  </pluginExecutions>
+</lifecycleMappingMetadata>
