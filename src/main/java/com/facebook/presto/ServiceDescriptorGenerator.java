@@ -2,7 +2,6 @@ package com.facebook.presto;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.List;
@@ -16,10 +15,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.apache.xbean.finder.AnnotationFinder;
-import org.apache.xbean.finder.ClassFinder;
-import org.codehaus.plexus.classworlds.realm.ClassRealm;
-import org.codehaus.plexus.classworlds.realm.DuplicateRealmException;
 import org.codehaus.plexus.util.FileUtils;
 
 import com.facebook.presto.spi.Plugin;
@@ -28,7 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
 /**
- * Presto mojo that generates the default service descriptor to META-INF/services/com.facebook.presto.spi.Plugin
+ * Mojo that generates the default service descriptor for Presto plugins to META-INF/services/com.facebook.presto.spi.Plugin.
  * 
  * @author Jason van Zyl
  *
@@ -36,6 +31,8 @@ import com.google.common.io.Files;
 @Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ServiceDescriptorGenerator extends AbstractMojo {
 
+  private final static String LS = System.getProperty("line.separator");
+  
   @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services/com.facebook.presto.spi.Plugin")
   private File servicesFile;
 
@@ -53,28 +50,38 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     if (!servicesFile.getParentFile().exists()) {
       servicesFile.getParentFile().mkdirs();
     }
+    List<Class<?>> pluginClasses;
     try {
       URLClassLoader loader = createClassloaderFromCompileTimeDependencies();
-      List<Class<?>> pluginClasses = findImplementationsOf(Plugin.class, loader);
+      pluginClasses = findImplementationsOf(Plugin.class, loader);
+    } catch (Exception e1) {
+      throw new MojoExecutionException(String.format("%n%nError scanning for classes implementing %s.", Plugin.class.getName()));
+    }
+    if (pluginClasses.size() == 0) {
+      throw new MojoExecutionException(String.format("%n%nYou must have at least one class that implements %s.", Plugin.class.getName()));
+    }
+    if (pluginClasses.size() > 1) {
+      StringBuffer sb = new StringBuffer();
       for (Class<?> pluginClass : pluginClasses) {
-        try {
-          Files.write(pluginClass.getName().getBytes(Charsets.UTF_8), servicesFile);
-          getLog().info(String.format("Wrote META-INF/services/com.facebook.presto.spi.Plugin with %s", pluginClass.getName()));
-        } catch (IOException e) {
-          throw new MojoExecutionException("Failed to write service descriptor.", e);
-        }
+        sb.append(pluginClass.getName()).append(LS);
       }
-    } catch (Exception e) {
-      // won't happen
+      throw new MojoExecutionException(String.format("%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.", Plugin.class.getName(), sb.toString()));
+    }
+    try {
+      Class<?> pluginClass = pluginClasses.get(0);
+      Files.write(pluginClass.getName().getBytes(Charsets.UTF_8), servicesFile);
+      getLog().info(String.format("Wrote META-INF/services/com.facebook.presto.spi.Plugin with %s", pluginClass.getName()));
+    } catch (IOException e) {
+      throw new MojoExecutionException("Failed to write service descriptor.", e);
     }
   }
 
   private URLClassLoader createClassloaderFromCompileTimeDependencies() throws Exception {
     List<URL> urls = Lists.newArrayList();
     urls.add(classesDirectory.toURI().toURL());
-    for (Artifact a : project.getArtifacts()) {
-      if (a.getFile() != null) {
-        urls.add(a.getFile().toURI().toURL());
+    for (Artifact artifact : project.getArtifacts()) {
+      if (artifact.getFile() != null) {
+        urls.add(artifact.getFile().toURI().toURL());
       }
     }
     return new URLClassLoader(urls.toArray(new URL[urls.size()]));
@@ -85,7 +92,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     List<String> classes = FileUtils.getFileNames(classesDirectory, "**/*.class", null, false);
     for (String classPath : classes) {
       String className = classPath.substring(0, classPath.length() - 6).replace('/', '.');
-      try {        
+      try {
         Class<?> implementation = searchRealm.loadClass(implementationTemplate.getName());
         Class<?> clazz = searchRealm.loadClass(className);
         if (implementation.isAssignableFrom(clazz)) {
