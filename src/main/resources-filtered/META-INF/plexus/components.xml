@@ -28,7 +28,7 @@
                 org.apache.maven.plugins:maven-compiler-plugin:2.5.1:compile
               </compile>
               <process-classes>
-                io.takari.maven.plugins:presto-maven-plugin:${provisioVersion}:generate-service-descriptor              
+                io.takari.maven.plugins:presto-maven-plugin:${project.version}:generate-service-descriptor              
               </process-classes>
               <process-test-resources>
                 org.apache.maven.plugins:maven-resources-plugin:2.6:testResources
