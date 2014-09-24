@@ -12,7 +12,7 @@
   -->
   <groupId>io.takari.maven.plugins</groupId>
   <artifactId>presto-maven-plugin</artifactId>
-  <version>0.1.6-SNAPSHOT</version>
+  <version>0.1.6</version>
   <packaging>maven-plugin</packaging>
   <name>Presto Maven Build Extension</name>
   <description>The Presto Maven Plugin provides a packing and lifecycle for Presto plugins</description>
