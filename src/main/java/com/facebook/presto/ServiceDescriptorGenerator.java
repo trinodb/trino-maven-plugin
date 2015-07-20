@@ -13,12 +13,10 @@
  */
 package com.facebook.presto;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.List;
-
+import com.facebook.presto.spi.Plugin;
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -30,22 +28,23 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
-import com.facebook.presto.spi.Plugin;
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.List;
 
 /**
  * Mojo that generates the default service descriptor for Presto plugins to META-INF/services/com.facebook.presto.spi.Plugin.
- * 
+ *
  * @author Jason van Zyl
  *
  */
 @Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ServiceDescriptorGenerator extends AbstractMojo {
 
-  private final static String LS = System.getProperty("line.separator");
-  
+  private static final String LS = System.getProperty("line.separator");
+
   @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services/com.facebook.presto.spi.Plugin")
   private File servicesFile;
 
@@ -55,13 +54,14 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
   @Parameter(defaultValue = "${project}")
   private MavenProject project;
 
+  @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     // If users have already provided their own service file then we will not overwrite it
     if (servicesFile.exists()) {
       return;
     }
     if (!servicesFile.getParentFile().exists()) {
-      servicesFile.getParentFile().mkdirs();
+      mkdirs(servicesFile.getParentFile());
     }
     List<Class<?>> pluginClasses;
     try {
@@ -70,11 +70,11 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     } catch (Exception e1) {
       throw new MojoExecutionException(String.format("%n%nError scanning for classes implementing %s.", Plugin.class.getName()));
     }
-    if (pluginClasses.size() == 0) {
+    if (pluginClasses.isEmpty()) {
       throw new MojoExecutionException(String.format("%n%nYou must have at least one class that implements %s.", Plugin.class.getName()));
     }
     if (pluginClasses.size() > 1) {
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       for (Class<?> pluginClass : pluginClasses) {
         sb.append(pluginClass.getName()).append(LS);
       }
@@ -116,5 +116,14 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
       }
     }
     return implementations;
+  }
+
+  @SuppressWarnings("ResultOfMethodCallIgnored")
+  private static void mkdirs(File file) throws MojoExecutionException
+  {
+    file.mkdirs();
+    if (!file.isDirectory()) {
+      throw new MojoExecutionException(String.format("%n%nFailed to create directory: %s", file));
+    }
   }
 }
