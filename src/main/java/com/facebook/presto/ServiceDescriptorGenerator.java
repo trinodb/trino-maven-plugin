@@ -100,7 +100,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     return new URLClassLoader(urls.toArray(new URL[urls.size()]));
   }
 
-  private List<Class<?>> findImplementationsOf(Class<?> implementationTemplate, URLClassLoader searchRealm) throws IOException {
+  private List<Class<?>> findImplementationsOf(Class<?> implementationTemplate, URLClassLoader searchRealm) throws IOException, MojoExecutionException {
     List<Class<?>> implementations = Lists.newArrayList();
     List<String> classes = FileUtils.getFileNames(classesDirectory, "**/*.class", null, false);
     for (String classPath : classes) {
@@ -112,7 +112,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
           implementations.add(clazz);
         }
       } catch (ClassNotFoundException e) {
-        // won't happen
+        throw new MojoExecutionException("Failed to load class.", e);
       }
     }
     return implementations;
