@@ -7,7 +7,7 @@
     <artifactId>takari</artifactId>
     <version>12</version>
   </parent>
-  <groupId>com.facebook.presto</groupId>
+  <groupId>io.takari.maven.plugins</groupId>
   <artifactId>presto-maven-plugin</artifactId>
   <version>0.1.7-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
