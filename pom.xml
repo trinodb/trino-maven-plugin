@@ -18,7 +18,7 @@
     <mavenVersion>3.2.3</mavenVersion>
     <guava.version>14.0.1</guava.version>
     <mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>
-    <provisioVersion>0.1.39</provisioVersion>
+    <provisioVersion>0.1.40</provisioVersion>
   </properties>
 
   <prerequisites>
