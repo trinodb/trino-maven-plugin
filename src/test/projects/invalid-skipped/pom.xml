@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.facebook.presto.maven.its</groupId>
-    <artifactId>basic</artifactId>
+    <artifactId>invalid-extra</artifactId>
     <version>1.0</version>
     <packaging>presto-plugin</packaging>
 
@@ -12,6 +12,14 @@
     </properties>
 
     <dependencies>
+        <!-- this dependency is not part of the SPI and thus should not be provided -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>18.0</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-spi</artifactId>
@@ -27,6 +35,9 @@
                 <artifactId>presto-maven-plugin</artifactId>
                 <version>${it-plugin.version}</version>
                 <extensions>true</extensions>
+                <configuration>
+                    <skipCheckSpiDependencies>true</skipCheckSpiDependencies>
+                </configuration>
             </plugin>
         </plugins>
     </build>

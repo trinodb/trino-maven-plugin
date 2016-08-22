@@ -19,9 +19,9 @@
 
     <properties>
         <mavenVersion>3.2.3</mavenVersion>
-        <guava.version>14.0.1</guava.version>
         <mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>
         <provisioVersion>0.1.40</provisioVersion>
+        <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
 
         <!-- declare language version for IntelliJ IDEA -->
         <maven.compiler.source>${takari.javaSourceVersion}</maven.compiler.source>
@@ -50,6 +50,12 @@
             <artifactId>maven-core</artifactId>
             <version>${mavenVersion}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.aether</groupId>
+            <artifactId>aether-api</artifactId>
+            <version>1.1.0</version>
         </dependency>
 
         <dependency>

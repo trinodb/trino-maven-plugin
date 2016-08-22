@@ -22,6 +22,9 @@
                     <lifecycle>
                         <id>default</id>
                         <phases>
+                            <validate>
+                                io.takari.maven.plugins:presto-maven-plugin:${project.version}:check-spi-dependencies
+                            </validate>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:2.6:resources
                             </process-resources>
