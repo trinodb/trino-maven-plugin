@@ -76,7 +76,7 @@ public class ServiceDescriptorGenerator
             pluginClasses = findImplementationsOf(Plugin.class, loader);
         }
         catch (Exception e) {
-            throw new MojoExecutionException(format("%n%nError scanning for classes implementing %s.", Plugin.class.getName()));
+            throw new MojoExecutionException(format("%n%nError scanning for classes implementing %s.", Plugin.class.getName()), e);
         }
         if (pluginClasses.isEmpty()) {
             throw new MojoExecutionException(format("%n%nYou must have at least one class that implements %s.", Plugin.class.getName()));
