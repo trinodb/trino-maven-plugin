@@ -23,7 +23,7 @@
                         <id>default</id>
                         <phases>
                             <validate>
-                                io.takari.maven.plugins:presto-maven-plugin:${project.version}:check-spi-dependencies
+                                com.facebook.presto:presto-maven-plugin:${project.version}:check-spi-dependencies
                             </validate>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:2.6:resources
@@ -32,7 +32,7 @@
                                 org.apache.maven.plugins:maven-compiler-plugin:2.5.1:compile
                             </compile>
                             <process-classes>
-                                io.takari.maven.plugins:presto-maven-plugin:${project.version}:generate-service-descriptor
+                                com.facebook.presto:presto-maven-plugin:${project.version}:generate-service-descriptor
                             </process-classes>
                             <process-test-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:2.6:testResources

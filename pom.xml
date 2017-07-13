@@ -8,7 +8,7 @@
         <version>22</version>
     </parent>
 
-    <groupId>io.takari.maven.plugins</groupId>
+    <groupId>com.facebook.presto</groupId>
     <artifactId>presto-maven-plugin</artifactId>
     <version>0.1.13-SNAPSHOT</version>
     <packaging>takari-maven-plugin</packaging>

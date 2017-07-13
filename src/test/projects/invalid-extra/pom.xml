@@ -31,7 +31,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>io.takari.maven.plugins</groupId>
+                <groupId>com.facebook.presto</groupId>
                 <artifactId>presto-maven-plugin</artifactId>
                 <version>${it-plugin.version}</version>
                 <extensions>true</extensions>
