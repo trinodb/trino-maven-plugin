@@ -85,6 +85,7 @@ public class SpiDependencyChecker
     {
         return getArtifactDependencies(getSpiDependency())
                 .getRoot().getChildren().stream()
+                .filter(node -> !node.getDependency().isOptional())
                 .map(DependencyNode::getArtifact)
                 .map(artifact -> artifact.getGroupId() + ":" + artifact.getArtifactId())
                 .collect(toSet());
