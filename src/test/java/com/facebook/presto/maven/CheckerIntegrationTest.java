@@ -48,6 +48,37 @@ public class CheckerIntegrationTest
     }
 
     @Test
+    public void testExcludedExtraProvided()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("excluded-extra");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertErrorFreeLog();
+    }
+
+    @Test
+    public void testMultipleExcludedExtraProvided()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("two-excluded-extra");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertErrorFreeLog();
+    }
+
+    @Test
+    public void testInvalidAndExcludedExtraProvided()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("invalid-and-excluded-extra");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertNoLogText("dependency com.google.guava:guava must")
+                .assertLogText("[ERROR] Presto plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
+    }
+
+    @Test
     public void testInvalidMissingProvided()
             throws Exception
     {

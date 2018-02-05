@@ -19,6 +19,7 @@ import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import static java.lang.String.format;
@@ -36,6 +37,9 @@ public class SpiDependencyChecker
 
     @Parameter(defaultValue = "false")
     private boolean skipCheckSpiDependencies;
+
+    @Parameter
+    private final Set<String> allowedProvidedDependencies = new HashSet<>();
 
     @Parameter(defaultValue = "${project}")
     private MavenProject project;
@@ -74,7 +78,7 @@ public class SpiDependencyChecker
                     throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must have scope 'provided'. It is part of the SPI and will be provided at runtime.", name));
                 }
             }
-            else if ("provided".equals(artifact.getScope())) {
+            else if ("provided".equals(artifact.getScope()) && !allowedProvidedDependencies.contains(name)) {
                 throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.", name));
             }
         }
