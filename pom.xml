@@ -8,14 +8,20 @@
         <version>25</version>
     </parent>
 
-    <groupId>com.facebook.presto</groupId>
+    <groupId>io.prestosql</groupId>
     <artifactId>presto-maven-plugin</artifactId>
     <version>0.5-SNAPSHOT</version>
     <packaging>takari-maven-plugin</packaging>
 
     <name>Presto Maven Build Extension</name>
     <description>The Presto Maven Plugin provides a packing and lifecycle for Presto plugins</description>
-    <url>https://github.com/prestodb/presto-maven-plugin</url>
+    <url>https://github.com/prestosql/presto-maven-plugin</url>
+
+    <scm>
+        <connection>scm:git:git://github.com/prestosql/presto-maven-plugin.git</connection>
+        <url>https://github.com/prestosql/presto-maven-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <properties>
         <mavenVersion>3.2.3</mavenVersion>
