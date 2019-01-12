@@ -93,7 +93,7 @@ public class ServiceDescriptorGenerator
         try {
             Class<?> pluginClass = pluginClasses.get(0);
             Files.write(pluginClass.getName().getBytes(Charsets.UTF_8), servicesFile);
-            getLog().info(format("Wrote META-INF/services/com.facebook.presto.spi.Plugin with %s", pluginClass.getName()));
+            getLog().info(format("Wrote %s to %s", pluginClass.getName(), servicesFile));
         }
         catch (IOException e) {
             throw new MojoExecutionException("Failed to write service descriptor.", e);
