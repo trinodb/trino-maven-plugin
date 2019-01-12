@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.facebook.presto.maven;
+package io.prestosql.maven;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;

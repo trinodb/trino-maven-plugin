@@ -1,4 +1,4 @@
-package com.facebook.presto.maven;
+package io.prestosql.maven;
 
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.executor.MavenRuntime;

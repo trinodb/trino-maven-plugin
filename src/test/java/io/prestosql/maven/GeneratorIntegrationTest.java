@@ -1,4 +1,4 @@
-package com.facebook.presto.maven;
+package io.prestosql.maven;
 
 import com.google.common.collect.ImmutableList;
 import io.takari.maven.testing.TestResources;
