@@ -37,8 +37,7 @@ import java.util.List;
 import static java.lang.String.format;
 
 /**
- * Mojo that generates the default service descriptor for Presto plugins to
- * {@code META-INF/services/com.facebook.presto.spi.Plugin}.
+ * Mojo that generates the default service descriptor for Presto plugins.
  *
  * @author Jason van Zyl
  */
