@@ -13,7 +13,6 @@
  */
 package com.facebook.presto.maven;
 
-import com.facebook.presto.spi.Plugin;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -47,8 +46,11 @@ public class ServiceDescriptorGenerator
 {
     private static final String LS = System.getProperty("line.separator");
 
-    @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services/com.facebook.presto.spi.Plugin")
-    private File servicesFile;
+    @Parameter(defaultValue = "com.facebook.presto.spi.Plugin")
+    private String pluginClassName;
+
+    @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services")
+    private File servicesDirectory;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}")
     private File classesDirectory;
@@ -60,6 +62,8 @@ public class ServiceDescriptorGenerator
     public void execute()
             throws MojoExecutionException, MojoFailureException
     {
+        File servicesFile = new File(servicesDirectory, pluginClassName);
+
         // If users have already provided their own service file then we will not overwrite it
         if (servicesFile.exists()) {
             return;
@@ -72,13 +76,13 @@ public class ServiceDescriptorGenerator
         List<Class<?>> pluginClasses;
         try {
             URLClassLoader loader = createClassloaderFromCompileTimeDependencies();
-            pluginClasses = findImplementationsOf(Plugin.class, loader);
+            pluginClasses = findPluginImplementations(loader);
         }
         catch (Exception e) {
-            throw new MojoExecutionException(format("%n%nError scanning for classes implementing %s.", Plugin.class.getName()), e);
+            throw new MojoExecutionException(format("%n%nError scanning for classes implementing %s.", pluginClassName), e);
         }
         if (pluginClasses.isEmpty()) {
-            throw new MojoExecutionException(format("%n%nYou must have at least one class that implements %s.", Plugin.class.getName()));
+            throw new MojoExecutionException(format("%n%nYou must have at least one class that implements %s.", pluginClassName));
         }
 
         if (pluginClasses.size() > 1) {
@@ -86,7 +90,7 @@ public class ServiceDescriptorGenerator
             for (Class<?> pluginClass : pluginClasses) {
                 sb.append(pluginClass.getName()).append(LS);
             }
-            throw new MojoExecutionException(format("%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.", Plugin.class.getName(), sb));
+            throw new MojoExecutionException(format("%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.", pluginClassName, sb));
         }
 
         try {
@@ -112,7 +116,7 @@ public class ServiceDescriptorGenerator
         return new URLClassLoader(urls.toArray(new URL[urls.size()]));
     }
 
-    private List<Class<?>> findImplementationsOf(Class<?> implementationTemplate, URLClassLoader searchRealm)
+    private List<Class<?>> findPluginImplementations(URLClassLoader searchRealm)
             throws IOException, MojoExecutionException
     {
         List<Class<?>> implementations = Lists.newArrayList();
@@ -120,7 +124,7 @@ public class ServiceDescriptorGenerator
         for (String classPath : classes) {
             String className = classPath.substring(0, classPath.length() - 6).replace('/', '.');
             try {
-                Class<?> implementation = searchRealm.loadClass(implementationTemplate.getName());
+                Class<?> implementation = searchRealm.loadClass(pluginClassName);
                 Class<?> clazz = searchRealm.loadClass(className);
                 if (implementation.isAssignableFrom(clazz)) {
                     implementations.add(clazz);
