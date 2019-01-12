@@ -31,9 +31,11 @@ import static java.util.stream.Collectors.toSet;
 public class SpiDependencyChecker
         extends AbstractMojo
 {
-    private static final String SPI_GROUP = "com.facebook.presto";
-    private static final String SPI_ARTIFACT = "presto-spi";
-    private static final String SPI_NAME = SPI_GROUP + ":" + SPI_ARTIFACT;
+    @Parameter(defaultValue = "com.facebook.presto")
+    private String spiGroupId;
+
+    @Parameter(defaultValue = "presto-spi")
+    private String spiArtifactId;
 
     @Parameter(defaultValue = "false")
     private boolean skipCheckSpiDependencies;
@@ -113,20 +115,25 @@ public class SpiDependencyChecker
         for (Artifact artifact : project.getArtifacts()) {
             if (isSpiArtifact(artifact)) {
                 if (!"provided".equals(artifact.getScope())) {
-                    throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must have scope 'provided'.", SPI_NAME));
+                    throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must have scope 'provided'.", spiName()));
                 }
                 return artifact;
             }
         }
-        throw new MojoExecutionException(format("%n%nPresto plugin must depend on %s.", SPI_NAME));
+        throw new MojoExecutionException(format("%n%nPresto plugin must depend on %s.", spiName()));
     }
 
-    private static boolean isSpiArtifact(Artifact artifact)
+    private boolean isSpiArtifact(Artifact artifact)
     {
-        return SPI_GROUP.equals(artifact.getGroupId()) &&
-                SPI_ARTIFACT.equals(artifact.getArtifactId()) &&
+        return spiGroupId.equals(artifact.getGroupId()) &&
+                spiArtifactId.equals(artifact.getArtifactId()) &&
                 "jar".equals(artifact.getType()) &&
                 (artifact.getClassifier() == null);
+    }
+
+    private String spiName()
+    {
+        return spiGroupId + ":" + spiArtifactId;
     }
 
     private static org.eclipse.aether.artifact.Artifact aetherArtifact(Artifact artifact)
