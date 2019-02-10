@@ -1,6 +1,5 @@
 package io.prestosql.maven;
 
-import com.google.common.collect.ImmutableList;
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
@@ -15,6 +14,7 @@ import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.readAllLines;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MavenJUnitTestRunner.class)
@@ -47,6 +47,6 @@ public class GeneratorIntegrationTest
         File output = new File(basedir, "target/classes/" + DESCRIPTOR);
 
         List<String> lines = readAllLines(output.toPath(), UTF_8);
-        assertEquals(ImmutableList.of("its.BasicPlugin"), lines);
+        assertEquals(singletonList("its.BasicPlugin"), lines);
     }
 }

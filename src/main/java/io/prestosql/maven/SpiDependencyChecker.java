@@ -3,7 +3,6 @@ package io.prestosql.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -54,7 +53,7 @@ public class SpiDependencyChecker
 
     @Override
     public void execute()
-            throws MojoExecutionException, MojoFailureException
+            throws MojoExecutionException
     {
         if (skipCheckSpiDependencies) {
             getLog().info("Skipping SPI dependency checks");

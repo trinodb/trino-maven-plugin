@@ -13,13 +13,9 @@
  */
 package io.prestosql.maven;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -31,9 +27,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Mojo that generates the default service descriptor for Presto plugins.
@@ -60,7 +59,7 @@ public class ServiceDescriptorGenerator
 
     @Override
     public void execute()
-            throws MojoExecutionException, MojoFailureException
+            throws MojoExecutionException
     {
         File servicesFile = new File(servicesDirectory, pluginClassName);
 
@@ -95,7 +94,7 @@ public class ServiceDescriptorGenerator
 
         try {
             Class<?> pluginClass = pluginClasses.get(0);
-            Files.write(pluginClass.getName().getBytes(Charsets.UTF_8), servicesFile);
+            Files.write(servicesFile.toPath(), pluginClass.getName().getBytes(UTF_8));
             getLog().info(format("Wrote %s to %s", pluginClass.getName(), servicesFile));
         }
         catch (IOException e) {
@@ -106,20 +105,20 @@ public class ServiceDescriptorGenerator
     private URLClassLoader createClassloaderFromCompileTimeDependencies()
             throws Exception
     {
-        List<URL> urls = Lists.newArrayList();
+        List<URL> urls = new ArrayList<>();
         urls.add(classesDirectory.toURI().toURL());
         for (Artifact artifact : project.getArtifacts()) {
             if (artifact.getFile() != null) {
                 urls.add(artifact.getFile().toURI().toURL());
             }
         }
-        return new URLClassLoader(urls.toArray(new URL[urls.size()]));
+        return new URLClassLoader(urls.toArray(new URL[0]));
     }
 
     private List<Class<?>> findPluginImplementations(URLClassLoader searchRealm)
             throws IOException, MojoExecutionException
     {
-        List<Class<?>> implementations = Lists.newArrayList();
+        List<Class<?>> implementations = new ArrayList<>();
         List<String> classes = FileUtils.getFileNames(classesDirectory, "**/*.class", null, false);
         for (String classPath : classes) {
             String className = classPath.substring(0, classPath.length() - 6).replace('/', '.');
