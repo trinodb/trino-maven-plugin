@@ -29,9 +29,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.facebook.presto</groupId>
+            <groupId>io.prestosql</groupId>
             <artifactId>presto-spi</artifactId>
-            <version>0.151</version>
+            <version>300</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>

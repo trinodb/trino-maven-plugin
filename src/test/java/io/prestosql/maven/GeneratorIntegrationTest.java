@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings({"JUnitTestNG", "PublicField"})
 public class GeneratorIntegrationTest
 {
-    private static final String DESCRIPTOR = "META-INF/services/com.facebook.presto.spi.Plugin";
+    private static final String DESCRIPTOR = "META-INF/services/io.prestosql.spi.Plugin";
 
     @Rule
     public final TestResources resources = new TestResources();

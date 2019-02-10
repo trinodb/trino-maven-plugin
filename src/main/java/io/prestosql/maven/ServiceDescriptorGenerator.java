@@ -45,7 +45,7 @@ public class ServiceDescriptorGenerator
 {
     private static final String LS = System.getProperty("line.separator");
 
-    @Parameter(defaultValue = "com.facebook.presto.spi.Plugin")
+    @Parameter(defaultValue = "io.prestosql.spi.Plugin")
     private String pluginClassName;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services")

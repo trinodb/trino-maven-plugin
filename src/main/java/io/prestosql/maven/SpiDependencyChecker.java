@@ -30,7 +30,7 @@ import static java.util.stream.Collectors.toSet;
 public class SpiDependencyChecker
         extends AbstractMojo
 {
-    @Parameter(defaultValue = "com.facebook.presto")
+    @Parameter(defaultValue = "io.prestosql")
     private String spiGroupId;
 
     @Parameter(defaultValue = "presto-spi")

@@ -85,7 +85,7 @@ public class CheckerIntegrationTest
         File basedir = resources.getBasedir("invalid-missing");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Presto plugin dependency io.airlift:slice must have scope 'provided'.");
+                .assertLogText("[ERROR] Presto plugin dependency io.airlift:units must have scope 'provided'.");
     }
 
     @Test
