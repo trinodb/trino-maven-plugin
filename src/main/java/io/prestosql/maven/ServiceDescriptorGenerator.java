@@ -121,7 +121,7 @@ public class ServiceDescriptorGenerator
         List<Class<?>> implementations = new ArrayList<>();
         List<String> classes = FileUtils.getFileNames(classesDirectory, "**/*.class", null, false);
         for (String classPath : classes) {
-            String className = classPath.substring(0, classPath.length() - 6).replace('/', '.');
+            String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
             try {
                 Class<?> implementation = searchRealm.loadClass(pluginClassName);
                 Class<?> clazz = searchRealm.loadClass(className);
