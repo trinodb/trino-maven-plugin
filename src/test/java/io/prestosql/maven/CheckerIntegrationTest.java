@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 import java.io.File;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.3.9", "3.5.0", "3.6.0"})
+@MavenVersions({"3.3.9", "3.5.4", "3.6.2"})
 @SuppressWarnings({"JUnitTestNG", "PublicField"})
 public class CheckerIntegrationTest
 {
