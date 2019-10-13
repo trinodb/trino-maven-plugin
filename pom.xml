@@ -10,7 +10,7 @@
 
     <groupId>io.prestosql</groupId>
     <artifactId>presto-maven-plugin</artifactId>
-    <version>8-SNAPSHOT</version>
+    <version>8</version>
     <packaging>takari-maven-plugin</packaging>
 
     <name>Presto Maven Build Extension</name>
@@ -20,7 +20,7 @@
     <scm>
         <connection>scm:git:git://github.com/prestosql/presto-maven-plugin.git</connection>
         <url>https://github.com/prestosql/presto-maven-plugin</url>
-        <tag>HEAD</tag>
+        <tag>presto-maven-plugin-8</tag>
     </scm>
 
     <properties>
