@@ -11,10 +11,15 @@ import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.util.List;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.readAllLines;
+import static java.util.Collections.list;
 import static java.util.Collections.singletonList;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(MavenJUnitTestRunner.class)
@@ -48,5 +53,23 @@ public class GeneratorIntegrationTest
 
         List<String> lines = readAllLines(output.toPath(), UTF_8);
         assertEquals(singletonList("its.BasicPlugin"), lines);
+
+        File mainJarFile = new File(basedir, "target/basic-1.0.jar");
+        assertThat(mainJarFile).isFile();
+
+        try (JarFile jar = new JarFile(mainJarFile)) {
+            assertThat(list(jar.entries()))
+                    .extracting(ZipEntry::getName)
+                    .contains(DESCRIPTOR);
+        }
+
+        File pluginZipFile = new File(basedir, "target/basic-1.0.zip");
+        assertThat(pluginZipFile).isFile();
+
+        try (ZipFile zip = new ZipFile(pluginZipFile)) {
+            assertThat(list(zip.entries()))
+                    .extracting(ZipEntry::getName)
+                    .contains("basic-1.0/basic-1.0.jar");
+        }
     }
 }
