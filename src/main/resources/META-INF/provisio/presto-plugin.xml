@@ -1,4 +1,11 @@
 <assembly>
     <artifactSet to="/" ref="runtime.classpath" />
+
+    <fileSet to="/">
+        <directory path="${basedir}/target">
+            <include>${project.artifactId}-${project.version}-services.jar</include>
+        </directory>
+    </fileSet>
+
     <archive name="${project.artifactId}-${project.version}.zip" />
 </assembly>

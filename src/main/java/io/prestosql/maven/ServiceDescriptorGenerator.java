@@ -24,20 +24,20 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Mojo that generates the default service descriptor for Presto plugins.
- *
- * @author Jason van Zyl
+ * Mojo that generates the service descriptor JAR for Presto plugins.
  */
 @Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ServiceDescriptorGenerator
@@ -47,6 +47,9 @@ public class ServiceDescriptorGenerator
 
     @Parameter(defaultValue = "io.prestosql.spi.Plugin")
     private String pluginClassName;
+
+    @Parameter(defaultValue = "${project.build.directory}/${project.build.finalName}-services.jar")
+    private File servicesJar;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services")
     private File servicesDirectory;
@@ -62,14 +65,8 @@ public class ServiceDescriptorGenerator
             throws MojoExecutionException
     {
         File servicesFile = new File(servicesDirectory, pluginClassName);
-
-        // If users have already provided their own service file then we will not overwrite it
         if (servicesFile.exists()) {
-            return;
-        }
-
-        if (!servicesFile.getParentFile().exists()) {
-            mkdirs(servicesFile.getParentFile());
+            throw new MojoExecutionException(format("%n%nExisting service descriptor for %s found in output directory.", pluginClassName));
         }
 
         List<Class<?>> pluginClasses;
@@ -92,14 +89,19 @@ public class ServiceDescriptorGenerator
             throw new MojoExecutionException(format("%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.", pluginClassName, sb));
         }
 
-        try {
-            Class<?> pluginClass = pluginClasses.get(0);
-            Files.write(servicesFile.toPath(), pluginClass.getName().getBytes(UTF_8));
-            getLog().info(format("Wrote %s to %s", pluginClass.getName(), servicesFile));
+        Class<?> pluginClass = pluginClasses.get(0);
+        byte[] servicesFileData = (pluginClass.getName() + "\n").getBytes(UTF_8);
+
+        try (FileOutputStream out = new FileOutputStream(servicesJar);
+                JarOutputStream jar = new JarOutputStream(out)) {
+            jar.putNextEntry(new JarEntry("META-INF/services/" + pluginClassName));
+            jar.write(servicesFileData);
+            jar.closeEntry();
         }
         catch (IOException e) {
-            throw new MojoExecutionException("Failed to write service descriptor.", e);
+            throw new MojoExecutionException("Failed to write services JAR file.", e);
         }
+        getLog().info(format("Wrote %s to %s", pluginClass.getName(), servicesJar));
     }
 
     private URLClassLoader createClassloaderFromCompileTimeDependencies()
