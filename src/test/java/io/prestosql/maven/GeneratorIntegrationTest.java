@@ -16,6 +16,7 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.list;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,12 +45,32 @@ public class GeneratorIntegrationTest
     public void testBasic()
             throws Exception
     {
-        File basedir = resources.getBasedir("basic");
+        testProjectPackaging("basic", "its.BasicPlugin");
+    }
+
+    @Test
+    public void testAbstractPlugin()
+            throws Exception
+    {
+        testProjectPackaging("abstract-plugin-class", "its.TestPlugin");
+    }
+
+    @Test
+    public void testInterfacePlugin()
+            throws Exception
+    {
+        testProjectPackaging("interface-plugin-class", "its.TestPlugin");
+    }
+
+    protected void testProjectPackaging(String projectId, String expectedPluginClass)
+            throws Exception
+    {
+        File basedir = resources.getBasedir(projectId);
         maven.forProject(basedir)
                 .execute("package")
                 .assertErrorFreeLog();
 
-        File mainJarFile = new File(basedir, "target/basic-1.0.jar");
+        File mainJarFile = new File(basedir, format("target/%s-1.0.jar", projectId));
         assertThat(mainJarFile).isFile();
 
         try (JarFile jar = new JarFile(mainJarFile)) {
@@ -58,7 +79,7 @@ public class GeneratorIntegrationTest
                     .doesNotContain(DESCRIPTOR);
         }
 
-        File servicesJarFile = new File(basedir, "target/basic-1.0-services.jar");
+        File servicesJarFile = new File(basedir, format("target/%s-1.0-services.jar", projectId));
         assertThat(servicesJarFile).isFile();
 
         try (JarFile jar = new JarFile(servicesJarFile)) {
@@ -66,18 +87,18 @@ public class GeneratorIntegrationTest
             assertNotNull(entry);
             try (InputStream in = jar.getInputStream(entry)) {
                 String contents = new String(toByteArray(in), UTF_8);
-                assertThat(contents).isEqualTo("its.BasicPlugin\n");
+                assertThat(contents).isEqualTo(expectedPluginClass + "\n");
             }
         }
 
-        File pluginZipFile = new File(basedir, "target/basic-1.0.zip");
+        File pluginZipFile = new File(basedir, format("target/%s-1.0.zip", projectId));
         assertThat(pluginZipFile).isFile();
 
         try (ZipFile zip = new ZipFile(pluginZipFile)) {
             assertThat(list(zip.entries()))
                     .extracting(ZipEntry::getName)
-                    .contains("basic-1.0/basic-1.0.jar")
-                    .contains("basic-1.0/basic-1.0-services.jar");
+                    .contains(format("%1$s-1.0/%1$s-1.0.jar", projectId))
+                    .contains(format("%1$s-1.0/%1$s-1.0-services.jar", projectId));
         }
     }
 }
