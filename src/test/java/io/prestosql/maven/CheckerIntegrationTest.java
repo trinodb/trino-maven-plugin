@@ -38,6 +38,26 @@ public class CheckerIntegrationTest
     }
 
     @Test
+    public void testAbstractPluginClass()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("abstract-plugin-class");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertErrorFreeLog();
+    }
+
+    @Test
+    public void testInterfacePluginClass()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("interface-plugin-class");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertErrorFreeLog();
+    }
+
+    @Test
     public void testInvalidExtraProvided()
             throws Exception
     {

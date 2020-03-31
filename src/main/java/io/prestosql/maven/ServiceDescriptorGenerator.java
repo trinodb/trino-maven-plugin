@@ -34,6 +34,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
 import static java.lang.String.format;
+import static java.lang.reflect.Modifier.isAbstract;
+import static java.lang.reflect.Modifier.isInterface;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -125,9 +127,9 @@ public class ServiceDescriptorGenerator
         for (String classPath : classes) {
             String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
             try {
-                Class<?> implementation = searchRealm.loadClass(pluginClassName);
+                Class<?> pluginClass = searchRealm.loadClass(pluginClassName);
                 Class<?> clazz = searchRealm.loadClass(className);
-                if (implementation.isAssignableFrom(clazz)) {
+                if (isImplementation(clazz, pluginClass)) {
                     implementations.add(clazz);
                 }
             }
@@ -146,5 +148,10 @@ public class ServiceDescriptorGenerator
         if (!file.isDirectory()) {
             throw new MojoExecutionException(format("%n%nFailed to create directory: %s", file));
         }
+    }
+
+    private static boolean isImplementation(Class<?> clazz, Class<?> pluginClass)
+    {
+        return pluginClass.isAssignableFrom(clazz) && !isAbstract(clazz.getModifiers()) && !isInterface(clazz.getModifiers());
     }
 }
