@@ -3,10 +3,10 @@
     <components>
         <component>
             <role>org.apache.maven.artifact.handler.ArtifactHandler</role>
-            <role-hint>presto-plugin</role-hint>
+            <role-hint>trino-plugin</role-hint>
             <implementation>org.apache.maven.artifact.handler.DefaultArtifactHandler</implementation>
             <configuration>
-                <type>presto-plugin</type>
+                <type>trino-plugin</type>
                 <extension>zip</extension>
                 <language>java</language>
                 <addedToClasspath>false</addedToClasspath>
@@ -15,7 +15,7 @@
 
         <component>
             <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
-            <role-hint>presto-plugin</role-hint>
+            <role-hint>trino-plugin</role-hint>
             <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>
             <configuration>
                 <lifecycles>
@@ -23,7 +23,7 @@
                         <id>default</id>
                         <phases>
                             <validate>
-                                io.prestosql:presto-maven-plugin:${project.version}:check-spi-dependencies
+                                io.trino:trino-maven-plugin:${project.version}:check-spi-dependencies
                             </validate>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:2.6:resources
@@ -32,7 +32,7 @@
                                 org.apache.maven.plugins:maven-compiler-plugin:2.5.1:compile
                             </compile>
                             <process-classes>
-                                io.prestosql:presto-maven-plugin:${project.version}:generate-service-descriptor
+                                io.trino:trino-maven-plugin:${project.version}:generate-service-descriptor
                             </process-classes>
                             <process-test-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:2.6:testResources

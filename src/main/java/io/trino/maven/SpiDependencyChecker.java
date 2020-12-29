@@ -1,4 +1,4 @@
-package io.prestosql.maven;
+package io.trino.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -30,10 +30,10 @@ import static java.util.stream.Collectors.toSet;
 public class SpiDependencyChecker
         extends AbstractMojo
 {
-    @Parameter(defaultValue = "io.prestosql")
+    @Parameter(defaultValue = "io.trino")
     private String spiGroupId;
 
-    @Parameter(defaultValue = "presto-spi")
+    @Parameter(defaultValue = "trino-spi")
     private String spiArtifactId;
 
     @Parameter(defaultValue = "false")
@@ -70,17 +70,17 @@ public class SpiDependencyChecker
             String name = artifact.getGroupId() + ":" + artifact.getArtifactId();
             if (spiDependencies.contains(name)) {
                 if (!"jar".equals(artifact.getType())) {
-                    throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must have type 'jar'.", name));
+                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must have type 'jar'.", name));
                 }
                 if (artifact.getClassifier() != null) {
-                    throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must not have a classifier.", name));
+                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must not have a classifier.", name));
                 }
                 if (!"provided".equals(artifact.getScope())) {
-                    throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must have scope 'provided'. It is part of the SPI and will be provided at runtime.", name));
+                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must have scope 'provided'. It is part of the SPI and will be provided at runtime.", name));
                 }
             }
             else if ("provided".equals(artifact.getScope()) && !allowedProvidedDependencies.contains(name)) {
-                throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.", name));
+                throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.", name));
             }
         }
     }
@@ -114,12 +114,12 @@ public class SpiDependencyChecker
         for (Artifact artifact : project.getArtifacts()) {
             if (isSpiArtifact(artifact)) {
                 if (!"provided".equals(artifact.getScope())) {
-                    throw new MojoExecutionException(format("%n%nPresto plugin dependency %s must have scope 'provided'.", spiName()));
+                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must have scope 'provided'.", spiName()));
                 }
                 return artifact;
             }
         }
-        throw new MojoExecutionException(format("%n%nPresto plugin must depend on %s.", spiName()));
+        throw new MojoExecutionException(format("%n%nTrino plugin must depend on %s.", spiName()));
     }
 
     private boolean isSpiArtifact(Artifact artifact)
