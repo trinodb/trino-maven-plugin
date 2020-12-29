@@ -1,4 +1,4 @@
-package io.prestosql.maven;
+package io.trino.maven;
 
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.executor.MavenRuntime;
@@ -64,7 +64,7 @@ public class CheckerIntegrationTest
         File basedir = resources.getBasedir("invalid-extra");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Presto plugin dependency com.google.guava:guava must not have scope 'provided'.");
+                .assertLogText("[ERROR] Trino plugin dependency com.google.guava:guava must not have scope 'provided'.");
     }
 
     @Test
@@ -95,7 +95,7 @@ public class CheckerIntegrationTest
         maven.forProject(basedir)
                 .execute("verify")
                 .assertNoLogText("dependency com.google.guava:guava must")
-                .assertLogText("[ERROR] Presto plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
+                .assertLogText("[ERROR] Trino plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
     }
 
     @Test
@@ -105,7 +105,7 @@ public class CheckerIntegrationTest
         File basedir = resources.getBasedir("invalid-missing");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Presto plugin dependency io.airlift:units must have scope 'provided'.");
+                .assertLogText("[ERROR] Trino plugin dependency io.airlift:units must have scope 'provided'.");
     }
 
     @Test

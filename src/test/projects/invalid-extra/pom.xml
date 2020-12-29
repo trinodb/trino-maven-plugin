@@ -5,7 +5,7 @@
     <groupId>io.prestosql.maven.its</groupId>
     <artifactId>invalid-extra</artifactId>
     <version>1.0</version>
-    <packaging>presto-plugin</packaging>
+    <packaging>trino-plugin</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -31,10 +31,16 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>io.prestosql</groupId>
-                <artifactId>presto-maven-plugin</artifactId>
+                <groupId>io.trino</groupId>
+                <artifactId>trino-maven-plugin</artifactId>
                 <version>${it-plugin.version}</version>
                 <extensions>true</extensions>
+                <configuration>
+                    <!-- TODO: remove after trino-spi is released -->
+                    <pluginClassName>io.prestosql.spi.Plugin</pluginClassName>
+                    <spiGroupId>io.prestosql</spiGroupId>
+                    <spiArtifactId>presto-spi</spiArtifactId>
+                </configuration>
             </plugin>
         </plugins>
     </build>

@@ -1,4 +1,4 @@
-package io.prestosql.maven;
+package io.trino.maven;
 
 import io.takari.maven.testing.TestResources;
 import io.takari.maven.testing.executor.MavenRuntime;

@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.prestosql.maven;
+package io.trino.maven;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
@@ -39,7 +39,7 @@ import static java.lang.reflect.Modifier.isInterface;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
- * Mojo that generates the service descriptor JAR for Presto plugins.
+ * Mojo that generates the service descriptor JAR for Trino plugins.
  */
 @Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE)
 public class ServiceDescriptorGenerator
@@ -47,7 +47,7 @@ public class ServiceDescriptorGenerator
 {
     private static final String LS = System.getProperty("line.separator");
 
-    @Parameter(defaultValue = "io.prestosql.spi.Plugin")
+    @Parameter(defaultValue = "io.trino.spi.Plugin")
     private String pluginClassName;
 
     @Parameter(defaultValue = "${project.build.directory}/${project.build.finalName}-services.jar")
