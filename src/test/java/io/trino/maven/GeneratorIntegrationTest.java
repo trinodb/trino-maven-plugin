@@ -28,7 +28,7 @@ import static org.junit.Assert.assertNotNull;
 @SuppressWarnings({"JUnitTestNG", "PublicField"})
 public class GeneratorIntegrationTest
 {
-    private static final String DESCRIPTOR = "META-INF/services/io.prestosql.spi.Plugin";
+    private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";
 
     @Rule
     public final TestResources resources = new TestResources();

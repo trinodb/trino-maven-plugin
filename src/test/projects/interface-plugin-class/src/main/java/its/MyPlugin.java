@@ -1,6 +1,6 @@
 package its;
 
-import io.prestosql.spi.Plugin;
+import io.trino.spi.Plugin;
 
 public interface MyPlugin
         extends Plugin {}
