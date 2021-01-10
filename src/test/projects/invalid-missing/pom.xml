@@ -12,17 +12,17 @@
     </properties>
 
     <dependencies>
-        <!-- this dependency will bring in 'units' transitively -->
+        <!-- this dependency will bring in 'slice' transitively -->
         <dependency>
             <groupId>io.airlift</groupId>
-            <artifactId>concurrent</artifactId>
-            <version>0.178</version>
+            <artifactId>stats</artifactId>
+            <version>205</version>
         </dependency>
 
         <dependency>
-            <groupId>io.prestosql</groupId>
-            <artifactId>presto-spi</artifactId>
-            <version>300</version>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-spi</artifactId>
+            <version>351</version>
             <scope>provided</scope>
         </dependency>
 
@@ -41,12 +41,6 @@
                 <artifactId>trino-maven-plugin</artifactId>
                 <version>${it-plugin.version}</version>
                 <extensions>true</extensions>
-                <configuration>
-                    <!-- TODO: remove after trino-spi is released -->
-                    <pluginClassName>io.prestosql.spi.Plugin</pluginClassName>
-                    <spiGroupId>io.prestosql</spiGroupId>
-                    <spiArtifactId>presto-spi</spiArtifactId>
-                </configuration>
             </plugin>
         </plugins>
     </build>

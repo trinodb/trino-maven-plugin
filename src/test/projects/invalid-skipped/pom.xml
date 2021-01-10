@@ -21,9 +21,9 @@
         </dependency>
 
         <dependency>
-            <groupId>io.prestosql</groupId>
-            <artifactId>presto-spi</artifactId>
-            <version>300</version>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-spi</artifactId>
+            <version>351</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -37,10 +37,6 @@
                 <extensions>true</extensions>
                 <configuration>
                     <skipCheckSpiDependencies>true</skipCheckSpiDependencies>
-                    <!-- TODO: remove after trino-spi is released -->
-                    <pluginClassName>io.prestosql.spi.Plugin</pluginClassName>
-                    <spiGroupId>io.prestosql</spiGroupId>
-                    <spiArtifactId>presto-spi</spiArtifactId>
                 </configuration>
             </plugin>
         </plugins>

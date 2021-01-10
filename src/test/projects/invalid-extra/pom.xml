@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.prestosql.maven.its</groupId>
+    <groupId>io.trino.maven.its</groupId>
     <artifactId>invalid-extra</artifactId>
     <version>1.0</version>
     <packaging>trino-plugin</packaging>
@@ -21,9 +21,9 @@
         </dependency>
 
         <dependency>
-            <groupId>io.prestosql</groupId>
-            <artifactId>presto-spi</artifactId>
-            <version>300</version>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-spi</artifactId>
+            <version>351</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
@@ -35,12 +35,6 @@
                 <artifactId>trino-maven-plugin</artifactId>
                 <version>${it-plugin.version}</version>
                 <extensions>true</extensions>
-                <configuration>
-                    <!-- TODO: remove after trino-spi is released -->
-                    <pluginClassName>io.prestosql.spi.Plugin</pluginClassName>
-                    <spiGroupId>io.prestosql</spiGroupId>
-                    <spiArtifactId>presto-spi</spiArtifactId>
-                </configuration>
             </plugin>
         </plugins>
     </build>
