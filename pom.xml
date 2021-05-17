@@ -24,7 +24,7 @@
     </scm>
 
     <properties>
-        <mavenVersion>3.2.3</mavenVersion>
+        <mavenVersion>3.6.3</mavenVersion>
         <mavenPluginPluginVersion>3.2</mavenPluginPluginVersion>
         <provisioVersion>1.0.16</provisioVersion>
         <takari.javaSourceVersion>1.8</takari.javaSourceVersion>
@@ -35,7 +35,7 @@
     </properties>
 
     <prerequisites>
-        <maven>[3.2.1,)</maven>
+        <maven>[3.6.3,)</maven>
     </prerequisites>
 
     <dependencies>
