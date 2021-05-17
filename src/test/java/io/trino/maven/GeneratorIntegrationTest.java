@@ -24,7 +24,7 @@ import static org.codehaus.plexus.util.IOUtil.toByteArray;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.3.9", "3.5.4", "3.6.2"})
+@MavenVersions({"3.6.3", "3.8.1"})
 @SuppressWarnings({"JUnitTestNG", "PublicField"})
 public class GeneratorIntegrationTest
 {
