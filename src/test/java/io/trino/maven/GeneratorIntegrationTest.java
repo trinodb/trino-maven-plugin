@@ -38,7 +38,11 @@ public class GeneratorIntegrationTest
     public GeneratorIntegrationTest(MavenRuntimeBuilder mavenBuilder)
             throws Exception
     {
-        this.maven = mavenBuilder.withCliOptions("-B", "-U").build();
+        String javaVersion = System.getProperty("java.specification.version");
+        this.maven = mavenBuilder.withCliOptions("-B", "-U",
+                "-Dmaven.compiler.source=" + javaVersion,
+                "-Dmaven.compiler.target=" + javaVersion)
+                .build();
     }
 
     @Test
