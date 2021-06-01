@@ -25,6 +25,9 @@
                             <validate>
                                 io.trino:trino-maven-plugin:${project.version}:check-spi-dependencies
                             </validate>
+                            <generate-resources>
+                                ca.vanzyl.provisio.maven.plugins:provisio-maven-plugin:${provisioVersion}:generateDependencies
+                            </generate-resources>
                             <process-resources>
                                 org.apache.maven.plugins:maven-resources-plugin:2.6:resources
                             </process-resources>
