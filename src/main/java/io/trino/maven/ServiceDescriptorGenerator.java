@@ -41,11 +41,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 /**
  * Mojo that generates the service descriptor JAR for Trino plugins.
  */
-@Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE)
+@Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE, threadSafe = true)
 public class ServiceDescriptorGenerator
         extends AbstractMojo
 {
-    private static final String LS = System.getProperty("line.separator");
+    private static final String LS = System.lineSeparator();
 
     @Parameter(defaultValue = "io.trino.spi.Plugin")
     private String pluginClassName;
