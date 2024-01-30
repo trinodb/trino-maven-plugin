@@ -26,7 +26,8 @@ import static java.util.stream.Collectors.toSet;
 
 @Mojo(name = "check-spi-dependencies",
         defaultPhase = LifecyclePhase.VALIDATE,
-        requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
+        requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
+        threadSafe = true)
 public class SpiDependencyChecker
         extends AbstractMojo
 {

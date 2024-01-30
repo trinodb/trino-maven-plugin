@@ -26,32 +26,32 @@
                                 io.trino:trino-maven-plugin:${project.version}:check-spi-dependencies
                             </validate>
                             <process-resources>
-                                org.apache.maven.plugins:maven-resources-plugin:2.6:resources
+                                org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:2.5.1:compile
+                                org.apache.maven.plugins:maven-compiler-plugin:3.12.1:compile
                             </compile>
                             <process-classes>
                                 io.trino:trino-maven-plugin:${project.version}:generate-service-descriptor
                             </process-classes>
                             <process-test-resources>
-                                org.apache.maven.plugins:maven-resources-plugin:2.6:testResources
+                                org.apache.maven.plugins:maven-resources-plugin:3.3.1:testResources
                             </process-test-resources>
                             <test-compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:2.5.1:testCompile
+                                org.apache.maven.plugins:maven-compiler-plugin:3.12.1:testCompile
                             </test-compile>
                             <test>
-                                org.apache.maven.plugins:maven-surefire-plugin:2.12.4:test
+                                org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test
                             </test>
                             <package>
-                                org.apache.maven.plugins:maven-jar-plugin:2.4:jar,
+                                org.apache.maven.plugins:maven-jar-plugin:3.3.0:jar,
                                 ca.vanzyl.provisio.maven.plugins:provisio-maven-plugin:${provisioVersion}:provision
                             </package>
                             <install>
-                                org.apache.maven.plugins:maven-install-plugin:2.4:install
+                                org.apache.maven.plugins:maven-install-plugin:3.1.1:install
                             </install>
                             <deploy>
-                                org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy
+                                org.apache.maven.plugins:maven-deploy-plugin:3.1.1:deploy
                             </deploy>
                         </phases>
                     </lifecycle>
