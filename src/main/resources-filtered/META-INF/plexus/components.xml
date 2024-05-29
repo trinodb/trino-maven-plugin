@@ -48,7 +48,7 @@
                                 ca.vanzyl.provisio.maven.plugins:provisio-maven-plugin:${provisioVersion}:provision
                             </package>
                             <install>
-                                org.apache.maven.plugins:maven-install-plugin:3.1.1:install
+                                org.apache.maven.plugins:maven-install-plugin:3.1.2:install
                             </install>
                             <deploy>
                                 org.apache.maven.plugins:maven-deploy-plugin:3.1.1:deploy
