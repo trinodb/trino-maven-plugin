@@ -10,7 +10,7 @@
 
   <groupId>io.trino</groupId>
   <artifactId>trino-maven-plugin</artifactId>
-  <version>15</version>
+  <version>16-SNAPSHOT</version>
   <packaging>takari-maven-plugin</packaging>
 
   <name>Trino Maven Build Extension</name>
