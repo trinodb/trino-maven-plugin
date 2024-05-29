@@ -26,7 +26,7 @@
     <properties>
         <mavenVersion>3.9.6</mavenVersion>
         <mavenPluginPluginVersion>3.11.0</mavenPluginPluginVersion>
-        <provisioVersion>1.0.20</provisioVersion>
+        <provisioVersion>1.0.25</provisioVersion>
         <takari.javaSourceVersion>11</takari.javaSourceVersion>
 
         <!-- declare language version for IntelliJ IDEA -->
