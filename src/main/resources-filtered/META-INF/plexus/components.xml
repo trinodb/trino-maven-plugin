@@ -29,7 +29,7 @@
                                 org.apache.maven.plugins:maven-resources-plugin:3.3.1:resources
                             </process-resources>
                             <compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:3.12.1:compile
+                                org.apache.maven.plugins:maven-compiler-plugin:3.13.0:compile
                             </compile>
                             <process-classes>
                                 io.trino:trino-maven-plugin:${project.version}:generate-service-descriptor
@@ -38,7 +38,7 @@
                                 org.apache.maven.plugins:maven-resources-plugin:3.3.1:testResources
                             </process-test-resources>
                             <test-compile>
-                                org.apache.maven.plugins:maven-compiler-plugin:3.12.1:testCompile
+                                org.apache.maven.plugins:maven-compiler-plugin:3.13.0:testCompile
                             </test-compile>
                             <test>
                                 org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test
