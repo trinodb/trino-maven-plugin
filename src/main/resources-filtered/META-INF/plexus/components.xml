@@ -44,7 +44,7 @@
                                 org.apache.maven.plugins:maven-surefire-plugin:3.2.5:test
                             </test>
                             <package>
-                                org.apache.maven.plugins:maven-jar-plugin:3.3.0:jar,
+                                org.apache.maven.plugins:maven-jar-plugin:3.4.1:jar,
                                 ca.vanzyl.provisio.maven.plugins:provisio-maven-plugin:${provisioVersion}:provision
                             </package>
                             <install>
