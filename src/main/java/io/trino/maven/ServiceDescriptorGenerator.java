@@ -28,9 +28,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -49,7 +51,6 @@ public class ServiceDescriptorGenerator
         extends AbstractMojo
 {
     private static final String LS = System.lineSeparator();
-    private static final DateFormat OUTPUT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     @Parameter(defaultValue = "io.trino.spi.Plugin")
     private String pluginClassName;
@@ -100,18 +101,12 @@ public class ServiceDescriptorGenerator
 
         Class<?> pluginClass = pluginClasses.get(0);
         byte[] servicesFileData = (pluginClass.getName() + "\n").getBytes(UTF_8);
-
         try (FileOutputStream out = new FileOutputStream(servicesJar);
                 JarOutputStream jar = new JarOutputStream(out)) {
 
             JarEntry jarEntry = new JarEntry("META-INF/services/" + pluginClassName);
             if (outputTimestamp != null && !outputTimestamp.isBlank()) {
-                try {
-                    jarEntry.setTime(OUTPUT_DATE_FORMAT.parse(outputTimestamp).getTime());
-                }
-                catch (ParseException e) {
-                    throw new RuntimeException("Could not parse outputTimestamp: " + outputTimestamp, e);
-                }
+                jarEntry.setTimeLocal(parseOutputTimestamp(outputTimestamp));
             }
 
             jar.putNextEntry(jarEntry);
@@ -165,6 +160,19 @@ public class ServiceDescriptorGenerator
         file.mkdirs();
         if (!file.isDirectory()) {
             throw new MojoExecutionException(format("%n%nFailed to create directory: %s", file));
+        }
+    }
+
+    private static LocalDateTime parseOutputTimestamp(String outputTimestamp)
+    {
+        try {
+            return OffsetDateTime.parse(outputTimestamp)
+                    .withOffsetSameInstant(ZoneOffset.UTC)
+                    .truncatedTo(ChronoUnit.SECONDS)
+                    .toLocalDateTime();
+        }
+        catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid project.build.outputTimestamp value '" + outputTimestamp + "'", e);
         }
     }
 
