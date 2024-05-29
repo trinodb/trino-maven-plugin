@@ -13,15 +13,10 @@
  */
 package io.trino.maven;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
+import static java.lang.String.format;
+import static java.lang.reflect.Modifier.isAbstract;
+import static java.lang.reflect.Modifier.isInterface;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -37,19 +32,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-
-import static java.lang.String.format;
-import static java.lang.reflect.Modifier.isAbstract;
-import static java.lang.reflect.Modifier.isInterface;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.util.FileUtils;
 
 /**
  * Mojo that generates the service descriptor JAR for Trino plugins.
  */
-@Mojo(name = "generate-service-descriptor", defaultPhase = LifecyclePhase.PACKAGE, requiresDependencyResolution = ResolutionScope.COMPILE, threadSafe = true)
-public class ServiceDescriptorGenerator
-        extends AbstractMojo
-{
+@Mojo(
+        name = "generate-service-descriptor",
+        defaultPhase = LifecyclePhase.PACKAGE,
+        requiresDependencyResolution = ResolutionScope.COMPILE,
+        threadSafe = true)
+public class ServiceDescriptorGenerator extends AbstractMojo {
     private static final String LS = System.lineSeparator();
 
     @Parameter(defaultValue = "io.trino.spi.Plugin")
@@ -71,24 +72,24 @@ public class ServiceDescriptorGenerator
     private MavenProject project;
 
     @Override
-    public void execute()
-            throws MojoExecutionException
-    {
+    public void execute() throws MojoExecutionException {
         File servicesFile = new File(servicesDirectory, pluginClassName);
         if (servicesFile.exists()) {
-            throw new MojoExecutionException(format("%n%nExisting service descriptor for %s found in output directory.", pluginClassName));
+            throw new MojoExecutionException(
+                    format("%n%nExisting service descriptor for %s found in output directory.", pluginClassName));
         }
 
         List<Class<?>> pluginClasses;
         try {
             URLClassLoader loader = createClassloaderFromCompileTimeDependencies();
             pluginClasses = findPluginImplementations(loader);
-        }
-        catch (Exception e) {
-            throw new MojoExecutionException(format("%n%nError scanning for classes implementing %s.", pluginClassName), e);
+        } catch (Exception e) {
+            throw new MojoExecutionException(
+                    format("%n%nError scanning for classes implementing %s.", pluginClassName), e);
         }
         if (pluginClasses.isEmpty()) {
-            throw new MojoExecutionException(format("%n%nYou must have at least one class that implements %s.", pluginClassName));
+            throw new MojoExecutionException(
+                    format("%n%nYou must have at least one class that implements %s.", pluginClassName));
         }
 
         if (pluginClasses.size() > 1) {
@@ -96,7 +97,9 @@ public class ServiceDescriptorGenerator
             for (Class<?> pluginClass : pluginClasses) {
                 sb.append(pluginClass.getName()).append(LS);
             }
-            throw new MojoExecutionException(format("%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.", pluginClassName, sb));
+            throw new MojoExecutionException(format(
+                    "%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.",
+                    pluginClassName, sb));
         }
 
         Class<?> pluginClass = pluginClasses.get(0);
@@ -112,16 +115,13 @@ public class ServiceDescriptorGenerator
             jar.putNextEntry(jarEntry);
             jar.write(servicesFileData);
             jar.closeEntry();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             throw new MojoExecutionException("Failed to write services JAR file.", e);
         }
         getLog().info(format("Wrote %s to %s", pluginClass.getName(), servicesJar));
     }
 
-    private URLClassLoader createClassloaderFromCompileTimeDependencies()
-            throws Exception
-    {
+    private URLClassLoader createClassloaderFromCompileTimeDependencies() throws Exception {
         List<URL> urls = new ArrayList<>();
         urls.add(classesDirectory.toURI().toURL());
         for (Artifact artifact : project.getArtifacts()) {
@@ -133,8 +133,7 @@ public class ServiceDescriptorGenerator
     }
 
     private List<Class<?>> findPluginImplementations(URLClassLoader searchRealm)
-            throws IOException, MojoExecutionException
-    {
+            throws IOException, MojoExecutionException {
         List<Class<?>> implementations = new ArrayList<>();
         List<String> classes = FileUtils.getFileNames(classesDirectory, "**/*.class", null, false);
         for (String classPath : classes) {
@@ -145,8 +144,7 @@ public class ServiceDescriptorGenerator
                 if (isImplementation(clazz, pluginClass)) {
                     implementations.add(clazz);
                 }
-            }
-            catch (ClassNotFoundException e) {
+            } catch (ClassNotFoundException e) {
                 throw new MojoExecutionException("Failed to load class.", e);
             }
         }
@@ -154,30 +152,28 @@ public class ServiceDescriptorGenerator
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
-    private static void mkdirs(File file)
-            throws MojoExecutionException
-    {
+    private static void mkdirs(File file) throws MojoExecutionException {
         file.mkdirs();
         if (!file.isDirectory()) {
             throw new MojoExecutionException(format("%n%nFailed to create directory: %s", file));
         }
     }
 
-    private static LocalDateTime parseOutputTimestamp(String outputTimestamp)
-    {
+    private static LocalDateTime parseOutputTimestamp(String outputTimestamp) {
         try {
             return OffsetDateTime.parse(outputTimestamp)
                     .withOffsetSameInstant(ZoneOffset.UTC)
                     .truncatedTo(ChronoUnit.SECONDS)
                     .toLocalDateTime();
-        }
-        catch (DateTimeParseException e) {
-            throw new IllegalArgumentException("Invalid project.build.outputTimestamp value '" + outputTimestamp + "'", e);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(
+                    "Invalid project.build.outputTimestamp value '" + outputTimestamp + "'", e);
         }
     }
 
-    private static boolean isImplementation(Class<?> clazz, Class<?> pluginClass)
-    {
-        return pluginClass.isAssignableFrom(clazz) && !isAbstract(clazz.getModifiers()) && !isInterface(clazz.getModifiers());
+    private static boolean isImplementation(Class<?> clazz, Class<?> pluginClass) {
+        return pluginClass.isAssignableFrom(clazz)
+                && !isAbstract(clazz.getModifiers())
+                && !isInterface(clazz.getModifiers());
     }
 }

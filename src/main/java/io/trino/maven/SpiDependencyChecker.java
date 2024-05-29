@@ -1,5 +1,10 @@
 package io.trino.maven;
 
+import static java.lang.String.format;
+import static java.util.stream.Collectors.toSet;
+
+import java.util.HashSet;
+import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -18,19 +23,12 @@ import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static java.lang.String.format;
-import static java.util.stream.Collectors.toSet;
-
-@Mojo(name = "check-spi-dependencies",
+@Mojo(
+        name = "check-spi-dependencies",
         defaultPhase = LifecyclePhase.VALIDATE,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         threadSafe = true)
-public class SpiDependencyChecker
-        extends AbstractMojo
-{
+public class SpiDependencyChecker extends AbstractMojo {
     @Parameter(defaultValue = "io.trino")
     private String spiGroupId;
 
@@ -53,9 +51,7 @@ public class SpiDependencyChecker
     private RepositorySystem repositorySystem;
 
     @Override
-    public void execute()
-            throws MojoExecutionException
-    {
+    public void execute() throws MojoExecutionException {
         if (skipCheckSpiDependencies) {
             getLog().info("Skipping SPI dependency checks");
             return;
@@ -71,51 +67,49 @@ public class SpiDependencyChecker
             String name = artifact.getGroupId() + ":" + artifact.getArtifactId();
             if (spiDependencies.contains(name)) {
                 if (!"jar".equals(artifact.getType())) {
-                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must have type 'jar'.", name));
+                    throw new MojoExecutionException(
+                            format("%n%nTrino plugin dependency %s must have type 'jar'.", name));
                 }
                 if (artifact.getClassifier() != null) {
-                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must not have a classifier.", name));
+                    throw new MojoExecutionException(
+                            format("%n%nTrino plugin dependency %s must not have a classifier.", name));
                 }
                 if (!"provided".equals(artifact.getScope())) {
-                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must have scope 'provided'. It is part of the SPI and will be provided at runtime.", name));
+                    throw new MojoExecutionException(format(
+                            "%n%nTrino plugin dependency %s must have scope 'provided'. It is part of the SPI and will be provided at runtime.",
+                            name));
                 }
-            }
-            else if ("provided".equals(artifact.getScope()) && !allowedProvidedDependencies.contains(name)) {
-                throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.", name));
+            } else if ("provided".equals(artifact.getScope()) && !allowedProvidedDependencies.contains(name)) {
+                throw new MojoExecutionException(format(
+                        "%n%nTrino plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.",
+                        name));
             }
         }
     }
 
-    private Set<String> getSpiDependencies()
-            throws MojoExecutionException
-    {
-        return getArtifactDependencies(getSpiDependency())
-                .getRoot().getChildren().stream()
+    private Set<String> getSpiDependencies() throws MojoExecutionException {
+        return getArtifactDependencies(getSpiDependency()).getRoot().getChildren().stream()
                 .filter(node -> !node.getDependency().isOptional())
                 .map(DependencyNode::getArtifact)
                 .map(artifact -> artifact.getGroupId() + ":" + artifact.getArtifactId())
                 .collect(toSet());
     }
 
-    private CollectResult getArtifactDependencies(Artifact artifact)
-            throws MojoExecutionException
-    {
+    private CollectResult getArtifactDependencies(Artifact artifact) throws MojoExecutionException {
         try {
             Dependency dependency = new Dependency(aetherArtifact(artifact), null);
             return repositorySystem.collectDependencies(repositorySession, new CollectRequest(dependency, null));
-        }
-        catch (DependencyCollectionException e) {
+        } catch (DependencyCollectionException e) {
             throw new MojoExecutionException("Failed to resolve dependencies.", e);
         }
     }
 
-    private Artifact getSpiDependency()
-            throws MojoExecutionException
-    {
+    private Artifact getSpiDependency() throws MojoExecutionException {
         for (Artifact artifact : project.getArtifacts()) {
             if (isSpiArtifact(artifact)) {
                 if (!"provided".equals(artifact.getScope())) {
-                    throw new MojoExecutionException(format("%n%nTrino plugin dependency %s must have scope 'provided'.", spiName()));
+                    throw new MojoExecutionException(
+                            format("%n%nTrino plugin dependency %s must have scope 'provided'.", spiName()));
                 }
                 return artifact;
             }
@@ -123,21 +117,18 @@ public class SpiDependencyChecker
         throw new MojoExecutionException(format("%n%nTrino plugin must depend on %s.", spiName()));
     }
 
-    private boolean isSpiArtifact(Artifact artifact)
-    {
-        return spiGroupId.equals(artifact.getGroupId()) &&
-                spiArtifactId.equals(artifact.getArtifactId()) &&
-                "jar".equals(artifact.getType()) &&
-                (artifact.getClassifier() == null);
+    private boolean isSpiArtifact(Artifact artifact) {
+        return spiGroupId.equals(artifact.getGroupId())
+                && spiArtifactId.equals(artifact.getArtifactId())
+                && "jar".equals(artifact.getType())
+                && (artifact.getClassifier() == null);
     }
 
-    private String spiName()
-    {
+    private String spiName() {
         return spiGroupId + ":" + spiArtifactId;
     }
 
-    private static org.eclipse.aether.artifact.Artifact aetherArtifact(Artifact artifact)
-    {
+    private static org.eclipse.aether.artifact.Artifact aetherArtifact(Artifact artifact) {
         return new DefaultArtifact(
                 artifact.getGroupId(),
                 artifact.getArtifactId(),
