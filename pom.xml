@@ -1,146 +1,145 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>io.takari</groupId>
-        <artifactId>takari</artifactId>
-        <version>52</version>
-    </parent>
+  <parent>
+    <groupId>io.takari</groupId>
+    <artifactId>takari</artifactId>
+    <version>54</version>
+  </parent>
 
-    <groupId>io.trino</groupId>
-    <artifactId>trino-maven-plugin</artifactId>
-    <version>15-SNAPSHOT</version>
-    <packaging>takari-maven-plugin</packaging>
+  <groupId>io.trino</groupId>
+  <artifactId>trino-maven-plugin</artifactId>
+  <version>15-SNAPSHOT</version>
+  <packaging>takari-maven-plugin</packaging>
 
-    <name>Trino Maven Build Extension</name>
-    <description>The Trino Maven Plugin provides a packing and lifecycle for Trino plugins</description>
+  <name>Trino Maven Build Extension</name>
+  <description>The Trino Maven Plugin provides a packing and lifecycle for Trino plugins</description>
+  <url>https://github.com/trinodb/trino-maven-plugin</url>
+
+  <prerequisites>
+    <maven>[3.6.3,)</maven>
+  </prerequisites>
+
+  <scm>
+    <connection>scm:git:git://github.com/trinodb/trino-maven-plugin.git</connection>
+    <tag>HEAD</tag>
     <url>https://github.com/trinodb/trino-maven-plugin</url>
+  </scm>
 
-    <scm>
-        <connection>scm:git:git://github.com/trinodb/trino-maven-plugin.git</connection>
-        <url>https://github.com/trinodb/trino-maven-plugin</url>
-        <tag>HEAD</tag>
-    </scm>
+  <properties>
+    <mavenVersion>3.9.6</mavenVersion>
+    <mavenPluginPluginVersion>3.13.0</mavenPluginPluginVersion>
+    <provisioVersion>1.0.25</provisioVersion>
+    <takari.javaSourceVersion>11</takari.javaSourceVersion>
+    <!-- declare language version for IntelliJ IDEA -->
+    <maven.compiler.source>${takari.javaSourceVersion}</maven.compiler.source>
+    <maven.compiler.target>${takari.javaSourceVersion}</maven.compiler.target>
+  </properties>
 
-    <properties>
-        <mavenVersion>3.9.6</mavenVersion>
-        <mavenPluginPluginVersion>3.11.0</mavenPluginPluginVersion>
-        <provisioVersion>1.0.25</provisioVersion>
-        <takari.javaSourceVersion>11</takari.javaSourceVersion>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${mavenVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${mavenPluginPluginVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>${mavenVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact</artifactId>
+      <version>${mavenVersion}</version>
+      <scope>provided</scope>
+    </dependency>
 
-        <!-- declare language version for IntelliJ IDEA -->
-        <maven.compiler.source>${takari.javaSourceVersion}</maven.compiler.source>
-        <maven.compiler.target>${takari.javaSourceVersion}</maven.compiler.target>
-    </properties>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-api</artifactId>
+      <version>1.9.18</version>
+      <scope>provided</scope>
+    </dependency>
 
-    <prerequisites>
-        <maven>[3.6.3,)</maven>
-    </prerequisites>
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-utils</artifactId>
+      <version>3.5.1</version>
+    </dependency>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-plugin-api</artifactId>
-            <version>${mavenVersion}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven.plugin-tools</groupId>
-            <artifactId>maven-plugin-annotations</artifactId>
-            <version>${mavenPluginPluginVersion}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-core</artifactId>
-            <version>${mavenVersion}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
-            <version>${mavenVersion}</version>
-            <scope>provided</scope>
-        </dependency>
+    <!-- for testing -->
+    <dependency>
+      <groupId>io.takari.maven.plugins</groupId>
+      <artifactId>takari-plugin-testing</artifactId>
+      <version>3.0.1</version>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.apache.maven.resolver</groupId>
-            <artifactId>maven-resolver-api</artifactId>
-            <version>1.9.18</version>
-            <scope>provided</scope>
-        </dependency>
+    <dependency>
+      <groupId>io.takari.maven.plugins</groupId>
+      <artifactId>takari-plugin-integration-testing</artifactId>
+      <version>3.0.1</version>
+      <type>pom</type>
+      <scope>test</scope>
+    </dependency>
 
-        <dependency>
-            <groupId>org.codehaus.plexus</groupId>
-            <artifactId>plexus-utils</artifactId>
-            <version>3.5.1</version>
-        </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.13.2</version>
+      <scope>test</scope>
+    </dependency>
 
-        <!-- for testing -->
-        <dependency>
-            <groupId>io.takari.maven.plugins</groupId>
-            <artifactId>takari-plugin-testing</artifactId>
-            <version>3.0.1</version>
-            <scope>test</scope>
-        </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <version>3.15.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
 
-        <dependency>
-            <groupId>io.takari.maven.plugins</groupId>
-            <artifactId>takari-plugin-integration-testing</artifactId>
-            <version>3.0.1</version>
-            <type>pom</type>
-            <scope>test</scope>
-        </dependency>
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <filtering>true</filtering>
+        <directory>src/main/resources-filtered</directory>
+      </resource>
+    </resources>
 
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.15.0</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-            <resource>
-                <directory>src/main/resources-filtered</directory>
-                <filtering>true</filtering>
-            </resource>
-        </resources>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>enforce</goal>
-                        </goals>
-                        <configuration>
-                            <rules>
-                                <requireJavaVersion>
-                                    <version>${takari.javaSourceVersion}</version>
-                                </requireJavaVersion>
-                                <requireMavenVersion>
-                                    <version>${mavenVersion}</version>
-                                </requireMavenVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>${takari.javaSourceVersion}</version>
+                </requireJavaVersion>
+                <requireMavenVersion>
+                  <version>${mavenVersion}</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>
