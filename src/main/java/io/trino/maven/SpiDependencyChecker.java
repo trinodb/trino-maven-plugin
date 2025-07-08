@@ -98,7 +98,8 @@ public class SpiDependencyChecker extends AbstractMojo {
     private CollectResult getArtifactDependencies(Artifact artifact) throws MojoExecutionException {
         try {
             Dependency dependency = new Dependency(aetherArtifact(artifact), null);
-            return repositorySystem.collectDependencies(repositorySession, new CollectRequest(dependency, null));
+            return repositorySystem.collectDependencies(
+                    repositorySession, new CollectRequest(dependency, project.getRemoteProjectRepositories()));
         } catch (DependencyCollectionException e) {
             throw new MojoExecutionException("Failed to resolve dependencies.", e);
         }
