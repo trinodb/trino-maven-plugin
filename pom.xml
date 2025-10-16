@@ -18,7 +18,7 @@
   <url>https://github.com/trinodb/trino-maven-plugin</url>
 
   <prerequisites>
-    <maven>[3.6.3,)</maven>
+    <maven>[3.9.1,)</maven>
   </prerequisites>
 
   <scm>
