@@ -23,7 +23,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.6.3", "3.8.1"})
+@MavenVersions({"3.9.1", "3.9.11"})
 @SuppressWarnings({"JUnitTestNG", "PublicField"})
 public class GeneratorIntegrationTest {
     private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";
