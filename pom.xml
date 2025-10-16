@@ -28,7 +28,7 @@
   </scm>
 
   <properties>
-    <mavenVersion>3.9.6</mavenVersion>
+    <mavenVersion>3.9.11</mavenVersion>
     <mavenPluginPluginVersion>3.13.0</mavenPluginPluginVersion>
     <provisioVersion>1.0.25</provisioVersion>
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
