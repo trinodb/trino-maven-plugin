@@ -14,6 +14,7 @@ import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -60,17 +61,17 @@ public class GeneratorIntegrationTest {
         File basedir = resources.getBasedir(projectId);
         maven.forProject(basedir).execute("package").assertErrorFreeLog();
 
-        File mainJarFile = new File(basedir, format("target/%s-1.0.jar", projectId));
-        assertThat(mainJarFile).isFile();
+        Path mainJarFile = basedir.toPath().resolve(format("target/%s-1.0.jar", projectId));
+        assertThat(mainJarFile).isRegularFile();
 
-        try (JarFile jar = new JarFile(mainJarFile)) {
+        try (JarFile jar = new JarFile(mainJarFile.toFile())) {
             assertThat(list(jar.entries())).extracting(ZipEntry::getName).doesNotContain(DESCRIPTOR);
         }
 
-        File servicesJarFile = new File(basedir, format("target/%s-1.0-services.jar", projectId));
-        assertThat(servicesJarFile).isFile();
+        Path servicesJarFile = basedir.toPath().resolve(format("target/%s-1.0-services.jar", projectId));
+        assertThat(servicesJarFile).isRegularFile();
 
-        try (JarFile jar = new JarFile(servicesJarFile)) {
+        try (JarFile jar = new JarFile(servicesJarFile.toFile())) {
             JarEntry entry = jar.getJarEntry(DESCRIPTOR);
             assertNotNull(entry);
             try (InputStream in = jar.getInputStream(entry)) {
@@ -79,10 +80,10 @@ public class GeneratorIntegrationTest {
             }
         }
 
-        File pluginZipFile = new File(basedir, format("target/%s-1.0.zip", projectId));
-        assertThat(pluginZipFile).isFile();
+        Path pluginZipFile = basedir.toPath().resolve(format("target/%s-1.0.zip", projectId));
+        assertThat(pluginZipFile).isRegularFile();
 
-        try (ZipFile zip = new ZipFile(pluginZipFile)) {
+        try (ZipFile zip = new ZipFile(pluginZipFile.toFile())) {
             assertThat(list(zip.entries()))
                     .extracting(ZipEntry::getName)
                     .contains(format("%1$s-1.0/%1$s-1.0.jar", projectId))

@@ -19,10 +19,12 @@ import static java.lang.reflect.Modifier.isInterface;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -57,13 +59,13 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     private String pluginClassName;
 
     @Parameter(defaultValue = "${project.build.directory}/${project.build.finalName}-services.jar")
-    private File servicesJar;
+    private String servicesJar;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}/META-INF/services")
-    private File servicesDirectory;
+    private String servicesDirectory;
 
     @Parameter(defaultValue = "${project.build.outputDirectory}")
-    private File classesDirectory;
+    private String classesDirectory;
 
     @Parameter(defaultValue = "${project.build.outputTimestamp}")
     private String outputTimestamp;
@@ -73,8 +75,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-        File servicesFile = new File(servicesDirectory, pluginClassName);
-        if (servicesFile.exists()) {
+        Path servicesFile = Path.of(servicesDirectory, pluginClassName);
+        if (Files.exists(servicesFile)) {
             throw new MojoExecutionException(
                     format("%n%nExisting service descriptor for %s found in output directory.", pluginClassName));
         }
@@ -104,7 +106,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
 
         Class<?> pluginClass = pluginClasses.get(0);
         byte[] servicesFileData = (pluginClass.getName() + "\n").getBytes(UTF_8);
-        try (FileOutputStream out = new FileOutputStream(servicesJar);
+        try (OutputStream out = Files.newOutputStream(Path.of(servicesJar));
                 JarOutputStream jar = new JarOutputStream(out)) {
 
             JarEntry jarEntry = new JarEntry("META-INF/services/" + pluginClassName);
@@ -123,7 +125,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
 
     private URLClassLoader createClassloaderFromCompileTimeDependencies() throws Exception {
         List<URL> urls = new ArrayList<>();
-        urls.add(classesDirectory.toURI().toURL());
+        urls.add(Path.of(classesDirectory).toUri().toURL());
         for (Artifact artifact : project.getArtifacts()) {
             if (artifact.getFile() != null) {
                 urls.add(artifact.getFile().toURI().toURL());
@@ -135,7 +137,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     private List<Class<?>> findPluginImplementations(URLClassLoader searchRealm)
             throws IOException, MojoExecutionException {
         List<Class<?>> implementations = new ArrayList<>();
-        List<String> classes = FileUtils.getFileNames(classesDirectory, "**/*.class", null, false);
+        List<String> classes = FileUtils.getFileNames(Path.of(classesDirectory).toFile(), "**/*.class", null, false);
         for (String classPath : classes) {
             String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
             try {
