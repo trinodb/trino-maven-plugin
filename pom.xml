@@ -10,7 +10,7 @@
 
   <groupId>io.trino</groupId>
   <artifactId>trino-maven-plugin</artifactId>
-  <version>17</version>
+  <version>18-SNAPSHOT</version>
   <packaging>takari-maven-plugin</packaging>
 
   <name>Trino Maven Build Extension</name>
@@ -23,7 +23,7 @@
 
   <scm>
     <connection>scm:git:git://github.com/trinodb/trino-maven-plugin.git</connection>
-    <tag>trino-maven-plugin-17</tag>
+    <tag>trino-maven-plugin-15</tag>
     <url>https://github.com/trinodb/trino-maven-plugin</url>
   </scm>
 
