@@ -2,6 +2,7 @@ package io.trino.maven;
 
 import static java.lang.String.format;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -105,7 +106,7 @@ public class TrinoPluginPackager
             }));
         }
 
-        try (OutputStream out = Files.newOutputStream(outputFile.toPath());
+        try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(outputFile.toPath()));
                 ZipOutputStream zip = new ZipOutputStream(out)) {
             zip.setMethod(ZipOutputStream.STORED);
             for (int i = 0; i < filesToAdd.size(); i++) {

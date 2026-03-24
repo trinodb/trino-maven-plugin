@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -42,7 +43,6 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
 
 /**
  * Mojo that generates the service descriptor JAR for Trino plugins.
@@ -82,8 +82,7 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
         }
 
         List<Class<?>> pluginClasses;
-        try {
-            URLClassLoader loader = createClassloaderFromCompileTimeDependencies();
+        try (URLClassLoader loader = createClassloaderFromCompileTimeDependencies()) {
             pluginClasses = findPluginImplementations(loader);
         } catch (Exception e) {
             throw new MojoExecutionException(
@@ -137,11 +136,18 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     private List<Class<?>> findPluginImplementations(URLClassLoader searchRealm)
             throws IOException, MojoExecutionException {
         List<Class<?>> implementations = new ArrayList<>();
-        List<String> classes = FileUtils.getFileNames(Path.of(classesDirectory).toFile(), "**/*.class", null, false);
+        Path classesRoot = Path.of(classesDirectory);
+        List<Path> classFiles;
+        try (Stream<Path> walk = Files.walk(classesRoot)) {
+            classFiles = walk
+                    .filter(path -> path.toString().endsWith(".class"))
+                    .toList();
+        }
         try {
             Class<?> pluginClass = searchRealm.loadClass(pluginClassName);
-            for (String classPath : classes) {
-                String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
+            for (Path classFile : classFiles) {
+                String relativePath = classesRoot.relativize(classFile).toString();
+                String className = relativePath.substring(0, relativePath.length() - 6).replace(File.separatorChar, '.');
                 Class<?> clazz = searchRealm.loadClass(className);
                 if (isImplementation(clazz, pluginClass)) {
                     implementations.add(clazz);
