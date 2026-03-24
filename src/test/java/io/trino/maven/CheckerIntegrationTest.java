@@ -1,25 +1,21 @@
 package io.trino.maven;
 
-import io.takari.maven.testing.TestResources;
+import io.takari.maven.testing.TestResources5;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
-import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
+import io.takari.maven.testing.executor.junit.MavenPluginTest;
 import java.io.File;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.9.1", "3.9.11"})
-@SuppressWarnings({"JUnitTestNG", "PublicField"})
-public class CheckerIntegrationTest {
-    @Rule
-    public final TestResources resources = new TestResources();
+@MavenVersions({"3.9.1", "3.9.14"})
+class CheckerIntegrationTest {
+    @RegisterExtension
+    final TestResources5 resources = new TestResources5();
 
-    public final MavenRuntime maven;
+    private final MavenRuntime maven;
 
-    public CheckerIntegrationTest(MavenRuntimeBuilder mavenBuilder) throws Exception {
+    CheckerIntegrationTest(MavenRuntimeBuilder mavenBuilder) throws Exception {
         String javaVersion = System.getProperty("java.specification.version");
         this.maven = mavenBuilder
                 .withCliOptions(
@@ -27,26 +23,26 @@ public class CheckerIntegrationTest {
                 .build();
     }
 
-    @Test
-    public void testBasic() throws Exception {
+    @MavenPluginTest
+    void testBasic() throws Exception {
         File basedir = resources.getBasedir("basic");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
-    @Test
-    public void testAbstractPluginClass() throws Exception {
+    @MavenPluginTest
+    void testAbstractPluginClass() throws Exception {
         File basedir = resources.getBasedir("abstract-plugin-class");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
-    @Test
-    public void testInterfacePluginClass() throws Exception {
+    @MavenPluginTest
+    void testInterfacePluginClass() throws Exception {
         File basedir = resources.getBasedir("interface-plugin-class");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
-    @Test
-    public void testInvalidExtraProvided() throws Exception {
+    @MavenPluginTest
+    void testInvalidExtraProvided() throws Exception {
         File basedir = resources.getBasedir("invalid-extra");
         maven.forProject(basedir)
                 .execute("verify")
@@ -54,20 +50,20 @@ public class CheckerIntegrationTest {
                         "[ERROR] Trino plugin dependency com.google.guava:guava must not have scope 'provided'.");
     }
 
-    @Test
-    public void testExcludedExtraProvided() throws Exception {
+    @MavenPluginTest
+    void testExcludedExtraProvided() throws Exception {
         File basedir = resources.getBasedir("excluded-extra");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
-    @Test
-    public void testMultipleExcludedExtraProvided() throws Exception {
+    @MavenPluginTest
+    void testMultipleExcludedExtraProvided() throws Exception {
         File basedir = resources.getBasedir("two-excluded-extra");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
-    @Test
-    public void testInvalidAndExcludedExtraProvided() throws Exception {
+    @MavenPluginTest
+    void testInvalidAndExcludedExtraProvided() throws Exception {
         File basedir = resources.getBasedir("invalid-and-excluded-extra");
         maven.forProject(basedir)
                 .execute("verify")
@@ -76,16 +72,16 @@ public class CheckerIntegrationTest {
                         "[ERROR] Trino plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
     }
 
-    @Test
-    public void testInvalidMissingProvided() throws Exception {
+    @MavenPluginTest
+    void testInvalidMissingProvided() throws Exception {
         File basedir = resources.getBasedir("invalid-missing");
         maven.forProject(basedir)
                 .execute("verify")
                 .assertLogText("[ERROR] Trino plugin dependency io.airlift:slice must have scope 'provided'.");
     }
 
-    @Test
-    public void testSkip() throws Exception {
+    @MavenPluginTest
+    void testSkip() throws Exception {
         File basedir = resources.getBasedir("invalid-skipped");
         maven.forProject(basedir)
                 .execute("verify")

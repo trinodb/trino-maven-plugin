@@ -5,13 +5,12 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.list;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.codehaus.plexus.util.IOUtil.toByteArray;
-import static org.junit.Assert.assertNotNull;
 
-import io.takari.maven.testing.TestResources;
+import io.takari.maven.testing.TestResources5;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
-import io.takari.maven.testing.executor.junit.MavenJUnitTestRunner;
+import io.takari.maven.testing.executor.junit.MavenPluginTest;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -19,22 +18,18 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-@RunWith(MavenJUnitTestRunner.class)
-@MavenVersions({"3.9.1", "3.9.11"})
-@SuppressWarnings({"JUnitTestNG", "PublicField"})
-public class GeneratorIntegrationTest {
+@MavenVersions({"3.9.1", "3.9.14"})
+class GeneratorIntegrationTest {
     private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";
 
-    @Rule
-    public final TestResources resources = new TestResources();
+    @RegisterExtension
+    final TestResources5 resources = new TestResources5();
 
-    public final MavenRuntime maven;
+    private final MavenRuntime maven;
 
-    public GeneratorIntegrationTest(MavenRuntimeBuilder mavenBuilder) throws Exception {
+    GeneratorIntegrationTest(MavenRuntimeBuilder mavenBuilder) throws Exception {
         String javaVersion = System.getProperty("java.specification.version");
         this.maven = mavenBuilder
                 .withCliOptions(
@@ -42,22 +37,22 @@ public class GeneratorIntegrationTest {
                 .build();
     }
 
-    @Test
-    public void testBasic() throws Exception {
+    @MavenPluginTest
+    void testBasic() throws Exception {
         testProjectPackaging("basic", "its.BasicPlugin");
     }
 
-    @Test
-    public void testAbstractPlugin() throws Exception {
+    @MavenPluginTest
+    void testAbstractPlugin() throws Exception {
         testProjectPackaging("abstract-plugin-class", "its.TestPlugin");
     }
 
-    @Test
-    public void testInterfacePlugin() throws Exception {
+    @MavenPluginTest
+    void testInterfacePlugin() throws Exception {
         testProjectPackaging("interface-plugin-class", "its.TestPlugin");
     }
 
-    protected void testProjectPackaging(String projectId, String expectedPluginClass) throws Exception {
+    private void testProjectPackaging(String projectId, String expectedPluginClass) throws Exception {
         File basedir = resources.getBasedir(projectId);
         maven.forProject(basedir).execute("package").assertErrorFreeLog();
 
@@ -73,7 +68,7 @@ public class GeneratorIntegrationTest {
 
         try (JarFile jar = new JarFile(servicesJarFile.toFile())) {
             JarEntry entry = jar.getJarEntry(DESCRIPTOR);
-            assertNotNull(entry);
+            assertThat(entry).isNotNull();
             try (InputStream in = jar.getInputStream(entry)) {
                 String contents = new String(toByteArray(in), UTF_8);
                 assertThat(contents).isEqualTo(expectedPluginClass + "\n");
