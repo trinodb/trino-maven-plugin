@@ -30,6 +30,7 @@
   <properties>
     <mavenVersion>3.9.14</mavenVersion>
     <mavenPluginPluginVersion>3.15.2</mavenPluginPluginVersion>
+    <junitJupiterVersion>5.14.3</junitJupiterVersion>
     <provisioVersion>1.1.1</provisioVersion>
     <takari.javaSourceVersion>11</takari.javaSourceVersion>
     <!-- declare language version for IntelliJ IDEA -->
@@ -93,9 +94,16 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junitJupiterVersion}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junitJupiterVersion}</version>
       <scope>test</scope>
     </dependency>
 
