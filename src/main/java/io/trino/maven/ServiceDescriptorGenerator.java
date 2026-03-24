@@ -138,27 +138,19 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
             throws IOException, MojoExecutionException {
         List<Class<?>> implementations = new ArrayList<>();
         List<String> classes = FileUtils.getFileNames(Path.of(classesDirectory).toFile(), "**/*.class", null, false);
-        for (String classPath : classes) {
-            String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
-            try {
-                Class<?> pluginClass = searchRealm.loadClass(pluginClassName);
+        try {
+            Class<?> pluginClass = searchRealm.loadClass(pluginClassName);
+            for (String classPath : classes) {
+                String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
                 Class<?> clazz = searchRealm.loadClass(className);
                 if (isImplementation(clazz, pluginClass)) {
                     implementations.add(clazz);
                 }
-            } catch (ClassNotFoundException e) {
-                throw new MojoExecutionException("Failed to load class.", e);
             }
+        } catch (ClassNotFoundException e) {
+            throw new MojoExecutionException("Failed to load class.", e);
         }
         return implementations;
-    }
-
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private static void mkdirs(File file) throws MojoExecutionException {
-        file.mkdirs();
-        if (!file.isDirectory()) {
-            throw new MojoExecutionException(format("%n%nFailed to create directory: %s", file));
-        }
     }
 
     private static LocalDateTime parseOutputTimestamp(String outputTimestamp) {
