@@ -21,7 +21,7 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @MavenVersions({"3.9.1", "3.9.14"})
-class GeneratorIntegrationTest {
+class TestGeneratorIntegration {
     private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";
 
     @RegisterExtension
@@ -29,7 +29,7 @@ class GeneratorIntegrationTest {
 
     private final MavenRuntime maven;
 
-    GeneratorIntegrationTest(MavenRuntimeBuilder mavenBuilder) throws Exception {
+    TestGeneratorIntegration(MavenRuntimeBuilder mavenBuilder) throws Exception {
         String javaVersion = System.getProperty("java.specification.version");
         this.maven = mavenBuilder
                 .withCliOptions(
