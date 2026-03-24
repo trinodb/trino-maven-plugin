@@ -12,6 +12,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -54,53 +61,90 @@ public class TrinoPluginPackager
             timestamp = parseOutputTimestamp(outputTimestamp);
         }
 
+        // entryName -> filePath
+        List<Map.Entry<String, Path>> filesToAdd = new ArrayList<>();
+
+        // Collect runtime classpath artifacts
+        for (Artifact artifact : project.getArtifacts()) {
+            if (!Artifact.SCOPE_RUNTIME.equals(artifact.getScope())
+                    && !Artifact.SCOPE_COMPILE.equals(artifact.getScope())) {
+                continue;
+            }
+            if ("pom".equals(artifact.getType())) {
+                continue;
+            }
+            File file = artifact.getFile();
+            if (file == null || !file.isFile()) {
+                continue;
+            }
+            filesToAdd.add(new AbstractMap.SimpleEntry<>(prefix + file.getName(), file.toPath()));
+        }
+
+        // Add main project jar
+        Artifact mainArtifact = project.getArtifact();
+        if (mainArtifact.getFile() != null && mainArtifact.getFile().isFile()) {
+            filesToAdd.add(new AbstractMap.SimpleEntry<>(prefix + mainArtifact.getFile().getName(), mainArtifact.getFile().toPath()));
+        }
+
+        // Add services jar
+        if (servicesJar.isFile()) {
+            filesToAdd.add(new AbstractMap.SimpleEntry<>(prefix + servicesJar.getName(), servicesJar.toPath()));
+        }
+
+        // Read files and compute CRC32 checksums in parallel for STORED entries
+        LocalDateTime finalTimestamp = timestamp;
+        List<CompletableFuture<byte[]>> futures = new ArrayList<>();
+        for (Map.Entry<String, Path> entry : filesToAdd) {
+            futures.add(CompletableFuture.supplyAsync(() -> {
+                try {
+                    return Files.readAllBytes(entry.getValue());
+                }
+                catch (IOException e) {
+                    throw new RuntimeException("Failed to read file: " + entry.getValue(), e);
+                }
+            }));
+        }
+
         try (OutputStream out = Files.newOutputStream(outputFile.toPath());
                 ZipOutputStream zip = new ZipOutputStream(out)) {
-            // Add runtime classpath artifacts
-            for (Artifact artifact : project.getArtifacts()) {
-                if (!Artifact.SCOPE_RUNTIME.equals(artifact.getScope())
-                        && !Artifact.SCOPE_COMPILE.equals(artifact.getScope())) {
-                    continue;
-                }
-                if ("pom".equals(artifact.getType())) {
-                    continue;
-                }
-                File file = artifact.getFile();
-                if (file == null || !file.isFile()) {
-                    continue;
-                }
-                addFileToZip(zip, prefix + file.getName(), file.toPath(), timestamp);
-            }
-
-            // Add main project jar
-            Artifact mainArtifact = project.getArtifact();
-            if (mainArtifact.getFile() != null && mainArtifact.getFile().isFile()) {
-                addFileToZip(zip, prefix + mainArtifact.getFile().getName(), mainArtifact.getFile().toPath(), timestamp);
-            }
-
-            // Add services jar
-            if (servicesJar.isFile()) {
-                addFileToZip(zip, prefix + servicesJar.getName(), servicesJar.toPath(), timestamp);
+            zip.setMethod(ZipOutputStream.STORED);
+            for (int i = 0; i < filesToAdd.size(); i++) {
+                byte[] data = futures.get(i).get();
+                ZipEntry zipEntry = prepareStoredEntry(filesToAdd.get(i).getKey(), data, finalTimestamp);
+                zip.putNextEntry(zipEntry);
+                zip.write(data);
+                zip.closeEntry();
             }
         }
         catch (IOException e) {
             throw new MojoExecutionException("Failed to create plugin zip.", e);
+        }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new MojoExecutionException("Interrupted while creating plugin zip.", e);
+        }
+        catch (ExecutionException e) {
+            throw new MojoExecutionException("Failed to prepare zip entry.", e.getCause());
         }
 
         project.getArtifact().setFile(outputFile);
         getLog().info(format("Created Trino plugin package: %s", outputFile.getName()));
     }
 
-    private static void addFileToZip(ZipOutputStream zip, String entryName, Path file, LocalDateTime timestamp)
-            throws IOException
+    private static ZipEntry prepareStoredEntry(String entryName, byte[] data, LocalDateTime timestamp)
     {
+        CRC32 crc = new CRC32();
+        crc.update(data);
+
         ZipEntry entry = new ZipEntry(entryName);
+        entry.setMethod(ZipEntry.STORED);
+        entry.setSize(data.length);
+        entry.setCompressedSize(data.length);
+        entry.setCrc(crc.getValue());
         if (timestamp != null) {
             entry.setTimeLocal(timestamp);
         }
-        zip.putNextEntry(entry);
-        Files.copy(file, zip);
-        zip.closeEntry();
+        return entry;
     }
 
     private static LocalDateTime parseOutputTimestamp(String outputTimestamp)
