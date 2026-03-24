@@ -9,13 +9,13 @@ import java.io.File;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 @MavenVersions({"3.9.1", "3.9.14"})
-class CheckerIntegrationTest {
+class TestCheckerIntegration {
     @RegisterExtension
     final TestResources5 resources = new TestResources5();
 
     private final MavenRuntime maven;
 
-    CheckerIntegrationTest(MavenRuntimeBuilder mavenBuilder) throws Exception {
+    TestCheckerIntegration(MavenRuntimeBuilder mavenBuilder) throws Exception {
         String javaVersion = System.getProperty("java.specification.version");
         this.maven = mavenBuilder
                 .withCliOptions(
