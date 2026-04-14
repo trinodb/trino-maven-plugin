@@ -76,6 +76,12 @@ public class SpiDependencyChecker extends AbstractMojo {
                             "%n%nTrino plugin dependency %s must have scope 'provided'. It is part of the SPI and will be provided at runtime.",
                             name));
                 }
+            } else if ("io.trino".equals(artifact.getGroupId())
+                    && "trino-main".equals(artifact.getArtifactId())
+                    && !"test".equals(artifact.getScope())) {
+                throw new MojoExecutionException(format(
+                        "%n%nTrino plugin dependency %s must have scope 'test'. It must not be on the plugin classpath.",
+                        name));
             } else if ("provided".equals(artifact.getScope()) && !allowedProvidedDependencies.contains(name)) {
                 throw new MojoExecutionException(format(
                         "%n%nTrino plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.",

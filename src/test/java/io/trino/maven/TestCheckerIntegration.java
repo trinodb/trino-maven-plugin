@@ -81,6 +81,36 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
+    void testInvalidTrinoMainDependency() throws Exception {
+        File basedir = resources.getBasedir("invalid-trino-main");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertLogText("[ERROR] Trino plugin dependency io.trino:trino-main must have scope 'test'.");
+    }
+
+    @MavenPluginTest
+    void testInvalidProvidedTrinoMainDependency() throws Exception {
+        File basedir = resources.getBasedir("invalid-provided-trino-main");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertLogText("[ERROR] Trino plugin dependency io.trino:trino-main must have scope 'test'.");
+    }
+
+    @MavenPluginTest
+    void testInvalidRuntimeTrinoMainDependency() throws Exception {
+        File basedir = resources.getBasedir("invalid-runtime-trino-main");
+        maven.forProject(basedir)
+                .execute("verify")
+                .assertLogText("[ERROR] Trino plugin dependency io.trino:trino-main must have scope 'test'.");
+    }
+
+    @MavenPluginTest
+    void testTestingScopedTrinoMainDependency() throws Exception {
+        File basedir = resources.getBasedir("testing-trino-main");
+        maven.forProject(basedir).execute("verify").assertErrorFreeLog();
+    }
+
+    @MavenPluginTest
     void testSkip() throws Exception {
         File basedir = resources.getBasedir("invalid-skipped");
         maven.forProject(basedir)
