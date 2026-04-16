@@ -1,6 +1,7 @@
 package io.trino.maven;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toSet;
 
 import java.util.HashSet;
@@ -64,15 +65,11 @@ public class SpiDependencyChecker extends AbstractMojo {
             if (isSpiArtifact(artifact)) {
                 continue;
             }
-            String name = artifact.getGroupId() + ":" + artifact.getArtifactId();
+            String name = artifactName(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier());
             if (spiDependencies.contains(name)) {
                 if (!"jar".equals(artifact.getType())) {
                     throw new MojoExecutionException(
                             format("%n%nTrino plugin dependency %s must have type 'jar'.", name));
-                }
-                if (artifact.getClassifier() != null) {
-                    throw new MojoExecutionException(
-                            format("%n%nTrino plugin dependency %s must not have a classifier.", name));
                 }
                 if (!"provided".equals(artifact.getScope())) {
                     throw new MojoExecutionException(format(
@@ -91,7 +88,8 @@ public class SpiDependencyChecker extends AbstractMojo {
         return getArtifactDependencies(getSpiDependency()).getRoot().getChildren().stream()
                 .filter(node -> !node.getDependency().isOptional())
                 .map(DependencyNode::getArtifact)
-                .map(artifact -> artifact.getGroupId() + ":" + artifact.getArtifactId())
+                .map(artifact ->
+                        artifactName(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier()))
                 .collect(toSet());
     }
 
@@ -127,6 +125,16 @@ public class SpiDependencyChecker extends AbstractMojo {
 
     private String spiName() {
         return spiGroupId + ":" + spiArtifactId;
+    }
+
+    private String artifactName(String groupId, String artifactId, String classifier) {
+        requireNonNull(groupId, "groupId is null");
+        requireNonNull(artifactId, "artifactId is null");
+        String name = groupId + ":" + artifactId;
+        if (classifier != null && !classifier.isEmpty()) {
+            name += ":" + classifier;
+        }
+        return name;
     }
 
     private static org.eclipse.aether.artifact.Artifact aetherArtifact(Artifact artifact) {
