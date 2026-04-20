@@ -14,9 +14,9 @@
     <dependencies>
         <!-- this dependency is not part of the SPI; it can be provided because it's individually excluded from the check -->
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
+            <groupId>io.airlift</groupId>
+            <artifactId>units</artifactId>
+            <version>1.13</version>
             <scope>provided</scope>
         </dependency>
 
@@ -37,7 +37,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <allowedProvidedDependencies>
-                        <allowedProvidedDependency>com.google.guava:guava</allowedProvidedDependency>
+                        <allowedProvidedDependency>io.airlift:units</allowedProvidedDependency>
                     </allowedProvidedDependencies>
                 </configuration>
             </plugin>
