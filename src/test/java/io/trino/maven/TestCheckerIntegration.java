@@ -46,8 +46,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-extra");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText(
-                        "[ERROR] Trino plugin dependency com.google.guava:guava must not have scope 'provided'.");
+                .assertLogText("[ERROR] Trino plugin dependency io.airlift:units must not have scope 'provided'.");
     }
 
     @MavenPluginTest
@@ -67,7 +66,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-and-excluded-extra");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertNoLogText("dependency com.google.guava:guava must")
+                .assertNoLogText("dependency io.airlift:units must")
                 .assertLogText(
                         "[ERROR] Trino plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
     }
