@@ -59,7 +59,7 @@ jobs:
         env:
           MAVEN_GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
         run: |
-          ./mvnw -B -Dnjord.autoPublish=false release:perform -Ptakari-release
+          ./mvnw -B release:perform -Ptakari-release
 
       - name: Display git status and history
         run: |
