@@ -36,6 +36,8 @@
     <!-- declare language version for IntelliJ IDEA -->
     <maven.compiler.source>${takari.javaSourceVersion}</maven.compiler.source>
     <maven.compiler.target>${takari.javaSourceVersion}</maven.compiler.target>
+
+    <njord.enabled>true</njord.enabled>
     <njord.autoPublish>false</njord.autoPublish>
   </properties>
 
