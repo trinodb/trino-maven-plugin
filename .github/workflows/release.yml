@@ -74,7 +74,7 @@ jobs:
         run: |
           ./mvnw njord:list
           ./mvnw njord:status
-          ./mvnw njord:validate
+          ./mvnw njord:validate -Dnjord.details -Dnjord.full
 
       - name: Run njord:publish
         env:
