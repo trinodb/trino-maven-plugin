@@ -92,7 +92,7 @@ jobs:
           git push origin --tags
 
       - name: Unlock branch after a release
-        if: always()
+        if: always() && steps.release-lock.outcome == 'success'
         uses: github/lock@v3
         id: release-unlock
         with:
