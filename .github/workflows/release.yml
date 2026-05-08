@@ -6,6 +6,9 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
     permissions:
       contents: write
       packages: write
@@ -36,12 +39,6 @@ jobs:
         run: |
           git config user.name "Trino Release"
           git config user.email "trino-bot@trino.io"
-
-      - name: Lock branch before release
-        uses: github/lock@v3
-        id: release-lock
-        with:
-          mode: lock
 
       - name: Run mvn release:prepare
         env:
@@ -90,13 +87,6 @@ jobs:
           git describe
           git push origin master
           git push origin --tags
-
-      - name: Unlock branch after a release
-        if: always() && steps.release-lock.outcome == 'success'
-        uses: github/lock@v3
-        id: release-unlock
-        with:
-          mode: unlock
 
       - name: Create release notes
         env:
