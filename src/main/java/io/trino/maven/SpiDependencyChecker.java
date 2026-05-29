@@ -30,6 +30,8 @@ import org.eclipse.aether.graph.DependencyNode;
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         threadSafe = true)
 public class SpiDependencyChecker extends AbstractMojo {
+    private static final Set<String> BUILT_IN_ALLOWED_PROVIDED_DEPENDENCIES = Set.of("org.locationtech.jts:jts-core");
+
     @Parameter(defaultValue = "io.trino")
     private String spiGroupId;
 
@@ -82,7 +84,7 @@ public class SpiDependencyChecker extends AbstractMojo {
                 throw new MojoExecutionException(format(
                         "%n%nTrino plugin dependency %s must have scope 'test'. It must not be on the plugin classpath.",
                         name));
-            } else if ("provided".equals(artifact.getScope()) && !allowedProvidedDependencies.contains(name)) {
+            } else if ("provided".equals(artifact.getScope()) && !isAllowedProvidedDependency(name)) {
                 throw new MojoExecutionException(format(
                         "%n%nTrino plugin dependency %s must not have scope 'provided'. It is not part of the SPI and will not be available at runtime.",
                         name));
@@ -120,6 +122,10 @@ public class SpiDependencyChecker extends AbstractMojo {
             }
         }
         throw new MojoExecutionException(format("%n%nTrino plugin must depend on %s.", spiName()));
+    }
+
+    private boolean isAllowedProvidedDependency(String name) {
+        return BUILT_IN_ALLOWED_PROVIDED_DEPENDENCIES.contains(name) || allowedProvidedDependencies.contains(name);
     }
 
     private boolean isSpiArtifact(Artifact artifact) {

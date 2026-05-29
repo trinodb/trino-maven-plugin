@@ -50,6 +50,12 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
+    void testBuiltInAllowedExtraProvided() throws Exception {
+        File basedir = resources.getBasedir("built-in-allowed-extra");
+        maven.forProject(basedir).execute("verify").assertErrorFreeLog();
+    }
+
+    @MavenPluginTest
     void testExcludedExtraProvided() throws Exception {
         File basedir = resources.getBasedir("excluded-extra");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
