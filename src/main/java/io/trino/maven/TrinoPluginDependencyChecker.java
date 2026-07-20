@@ -29,7 +29,7 @@ import org.eclipse.aether.graph.DependencyNode;
         defaultPhase = LifecyclePhase.VALIDATE,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         threadSafe = true)
-public class SpiDependencyChecker extends AbstractMojo {
+public class TrinoPluginDependencyChecker extends AbstractMojo {
     @Parameter(defaultValue = "io.trino")
     private String spiGroupId;
 
