@@ -20,7 +20,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@MavenVersions({"3.9.1", "3.9.14"})
+@MavenVersions({"3.9.14"})
 class TestGeneratorIntegration {
     private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";
 

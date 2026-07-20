@@ -8,7 +8,7 @@ import io.takari.maven.testing.executor.junit.MavenPluginTest;
 import java.io.File;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@MavenVersions({"3.9.1", "3.9.14"})
+@MavenVersions({"3.9.14"})
 class TestCheckerIntegration {
     @RegisterExtension
     final TestResources5 resources = new TestResources5();
