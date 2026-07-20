@@ -20,6 +20,8 @@ public class Utils
     private static final String GROUP_ID_SEPARATOR = "_";
     private static final int MAX_FILE_NAME_LENGTH = 64;
 
+    private Utils() {}
+
     static Optional<FileTime> parseOutputTimestamp(String outputTimestamp)
             throws MojoExecutionException
     {

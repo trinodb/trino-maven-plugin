@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.File;
 
-@MavenVersions({"3.9.14"})
+@MavenVersions("3.9.14")
 class TestCheckerIntegration
 {
     @RegisterExtension
