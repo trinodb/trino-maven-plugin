@@ -1,5 +1,6 @@
 package io.trino.maven;
 
+import io.takari.maven.testing.TestProperties;
 import io.takari.maven.testing.TestResources5;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
@@ -8,16 +9,22 @@ import io.takari.maven.testing.executor.junit.MavenPluginTest;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static java.lang.String.format;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.delete;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.walk;
 import static java.util.Collections.list;
+import static java.util.Collections.reverseOrder;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.codehaus.plexus.util.IOUtil.toByteArray;
 
@@ -98,6 +105,37 @@ class TestGeneratorIntegration
                     .extracting(ZipEntry::getName)
                     .contains("pom-type-dependency-1.0/pom-type-dependency-1.0.jar")
                     .noneMatch(name -> name.endsWith(".pom"));
+        }
+    }
+
+    @MavenPluginTest
+    void testClassesJarIsInstalledAlongsideBundle()
+            throws Exception
+    {
+        // The trino-plugin artifact handler uses the zip extension, so the main artifact installs as the plugin
+        // bundle. The classes jar must be installed as well, because plugin modules are compile dependencies (with
+        // the default jar type) of other modules.
+        File basedir = resources.getBasedir("basic");
+        Path installDirectory = new TestProperties().getLocalRepository().toPath()
+                .resolve("io/trino/maven/its/basic/1.0");
+        deleteRecursively(installDirectory);
+
+        maven.forProject(basedir).execute("install").assertErrorFreeLog();
+
+        assertThat(installDirectory.resolve("basic-1.0.zip")).isRegularFile();
+        assertThat(installDirectory.resolve("basic-1.0.jar")).isRegularFile();
+    }
+
+    private static void deleteRecursively(Path directory)
+            throws IOException
+    {
+        if (!exists(directory)) {
+            return;
+        }
+        try (Stream<Path> paths = walk(directory)) {
+            for (Path path : paths.sorted(reverseOrder()).toList()) {
+                delete(path);
+            }
         }
     }
 
