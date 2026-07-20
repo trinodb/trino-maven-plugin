@@ -46,7 +46,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-extra");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Trino plugin dependency io.airlift:units must not have scope 'provided'.");
+                .assertLogText("Trino plugin dependency io.airlift:units must not have scope 'provided'.");
     }
 
     @MavenPluginTest
@@ -68,7 +68,7 @@ class TestCheckerIntegration {
                 .execute("verify")
                 .assertNoLogText("dependency io.airlift:units must")
                 .assertLogText(
-                        "[ERROR] Trino plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
+                        "Trino plugin dependency org.scala-lang:scala-library must not have scope 'provided'.");
     }
 
     @MavenPluginTest
@@ -76,7 +76,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-missing");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Trino plugin dependency io.airlift:slice must have scope 'provided'.");
+                .assertLogText("Trino plugin dependency io.airlift:slice must have scope 'provided'.");
     }
 
     @MavenPluginTest
@@ -84,7 +84,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-trino-main");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Trino plugin dependency io.trino:trino-main must have scope 'test'.");
+                .assertLogText("Trino plugin dependency io.trino:trino-main must have scope 'test'.");
     }
 
     @MavenPluginTest
@@ -92,7 +92,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-provided-trino-main");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Trino plugin dependency io.trino:trino-main must have scope 'test'.");
+                .assertLogText("Trino plugin dependency io.trino:trino-main must have scope 'test'.");
     }
 
     @MavenPluginTest
@@ -100,7 +100,7 @@ class TestCheckerIntegration {
         File basedir = resources.getBasedir("invalid-runtime-trino-main");
         maven.forProject(basedir)
                 .execute("verify")
-                .assertLogText("[ERROR] Trino plugin dependency io.trino:trino-main must have scope 'test'.");
+                .assertLogText("Trino plugin dependency io.trino:trino-main must have scope 'test'.");
     }
 
     @MavenPluginTest
