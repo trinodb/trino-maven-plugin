@@ -13,27 +13,38 @@
  */
 package io.trino.maven;
 
-import static java.lang.String.format;
+import static io.trino.maven.Utils.parseOutputTimestamp;
+import static java.lang.String.join;
 import static java.lang.reflect.Modifier.isAbstract;
 import static java.lang.reflect.Modifier.isInterface;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.isRegularFile;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.readAllBytes;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLClassLoader;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoUnit;
+import java.nio.file.attribute.FileTime;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -42,7 +53,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.util.FileUtils;
+import org.objectweb.asm.ClassReader;
 
 /**
  * Mojo that generates the service descriptor JAR for Trino plugins.
@@ -53,8 +64,6 @@ import org.codehaus.plexus.util.FileUtils;
         requiresDependencyResolution = ResolutionScope.COMPILE,
         threadSafe = true)
 public class ServiceDescriptorGenerator extends AbstractMojo {
-    private static final String LS = System.lineSeparator();
-
     @Parameter(defaultValue = "io.trino.spi.Plugin")
     private String pluginClassName;
 
@@ -76,106 +85,188 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException {
         Path servicesFile = Path.of(servicesDirectory, pluginClassName);
-        if (Files.exists(servicesFile)) {
-            throw new MojoExecutionException(
-                    format("%n%nExisting service descriptor for %s found in output directory.", pluginClassName));
+        Optional<FileTime> outputTimestamp = parseOutputTimestamp(this.outputTimestamp);
+        if (exists(servicesFile)) {
+            throw new MojoExecutionException("Existing service descriptor for %s found in output directory.".formatted(pluginClassName));
         }
 
-        List<Class<?>> pluginClasses;
-        try {
-            URLClassLoader loader = createClassloaderFromCompileTimeDependencies();
-            pluginClasses = findPluginImplementations(loader);
-        } catch (Exception e) {
-            throw new MojoExecutionException(
-                    format("%n%nError scanning for classes implementing %s.", pluginClassName), e);
-        }
+        List<String> pluginClasses = findPluginImplementations();
         if (pluginClasses.isEmpty()) {
-            throw new MojoExecutionException(
-                    format("%n%nYou must have at least one class that implements %s.", pluginClassName));
+            throw new MojoExecutionException("Trino plugin must contain a class that implements %s.".formatted(pluginClassName));
         }
 
         if (pluginClasses.size() > 1) {
-            StringBuilder sb = new StringBuilder();
-            for (Class<?> pluginClass : pluginClasses) {
-                sb.append(pluginClass.getName()).append(LS);
-            }
-            throw new MojoExecutionException(format(
-                    "%n%nYou have more than one class that implements %s:%n%n%s%nYou can only have one per plugin project.",
-                    pluginClassName, sb));
+            throw new MojoExecutionException(
+                    "Trino plugin must contain only one class that implements %s, but found: %s"
+                            .formatted(pluginClassName, join(", ", pluginClasses)));
         }
 
-        Class<?> pluginClass = pluginClasses.get(0);
-        byte[] servicesFileData = (pluginClass.getName() + "\n").getBytes(UTF_8);
-        try (OutputStream out = Files.newOutputStream(Path.of(servicesJar));
+        String implementationName = pluginClasses.get(0);
+        byte[] servicesFileData = (implementationName + "\n").getBytes(UTF_8);
+        try (OutputStream out = newOutputStream(Path.of(servicesJar));
                 JarOutputStream jar = new JarOutputStream(out)) {
 
             JarEntry jarEntry = new JarEntry("META-INF/services/" + pluginClassName);
-            if (outputTimestamp != null && !outputTimestamp.isBlank()) {
-                jarEntry.setTimeLocal(parseOutputTimestamp(outputTimestamp));
-            }
-
+            outputTimestamp.ifPresent(jarEntry::setLastModifiedTime);
             jar.putNextEntry(jarEntry);
             jar.write(servicesFileData);
             jar.closeEntry();
         } catch (IOException e) {
             throw new MojoExecutionException("Failed to write services JAR file.", e);
         }
-        getLog().info(format("Wrote %s to %s", pluginClass.getName(), servicesJar));
+        if (getLog().isInfoEnabled()) {
+            getLog().info("Wrote %s to %s".formatted(implementationName, servicesJar));
+        }
     }
 
-    private URLClassLoader createClassloaderFromCompileTimeDependencies() throws Exception {
-        List<URL> urls = new ArrayList<>();
-        urls.add(Path.of(classesDirectory).toUri().toURL());
-        for (Artifact artifact : project.getArtifacts()) {
-            if (artifact.getFile() != null) {
-                urls.add(artifact.getFile().toURI().toURL());
+    private List<String> findPluginImplementations() throws MojoExecutionException {
+        Path classesRoot = Path.of(classesDirectory);
+        if (!isDirectory(classesRoot)) {
+            return List.of();
+        }
+
+        String pluginInternalName = pluginClassName.replace('.', '/');
+
+        // Scan all local class files and extract hierarchy info by reading the bytecode
+        Map<String, ClassInfo> classInfoMap = new HashMap<>();
+        Set<String> localClasses = new HashSet<>();
+        try (Stream<Path> paths = Files.walk(classesRoot)) {
+            for (Path classFile : paths.filter(path -> path.toString().endsWith(".class")).toList()) {
+                ClassReader reader = new ClassReader(readAllBytes(classFile));
+                classInfoMap.put(reader.getClassName(), ClassInfo.from(reader));
+                localClasses.add(reader.getClassName());
             }
         }
-        return new URLClassLoader(urls.toArray(new URL[0]));
-    }
-
-    private List<Class<?>> findPluginImplementations(URLClassLoader searchRealm)
-            throws IOException, MojoExecutionException {
-        List<Class<?>> implementations = new ArrayList<>();
-        List<String> classes = FileUtils.getFileNames(Path.of(classesDirectory).toFile(), "**/*.class", null, false);
-        for (String classPath : classes) {
-            String className = classPath.substring(0, classPath.length() - 6).replace(File.separatorChar, '.');
-            try {
-                Class<?> pluginClass = searchRealm.loadClass(pluginClassName);
-                Class<?> clazz = searchRealm.loadClass(className);
-                if (isImplementation(clazz, pluginClass)) {
-                    implementations.add(clazz);
-                }
-            } catch (ClassNotFoundException e) {
-                throw new MojoExecutionException("Failed to load class.", e);
-            }
+        catch (IOException e) {
+            throw new MojoExecutionException("Could not walk class hierarchy", e);
         }
-        return implementations;
-    }
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
-    private static void mkdirs(File file) throws MojoExecutionException {
-        file.mkdirs();
-        if (!file.isDirectory()) {
-            throw new MojoExecutionException(format("%n%nFailed to create directory: %s", file));
-        }
-    }
-
-    private static LocalDateTime parseOutputTimestamp(String outputTimestamp) {
+        // Open dependency JARs once and keep them open for the duration of the scan;
+        // reactor dependencies may be backed by directories (target/classes) instead of JARs
+        List<Path> dependencyDirectories = new ArrayList<>();
+        List<JarFile> dependencyJars = new ArrayList<>();
         try {
-            return OffsetDateTime.parse(outputTimestamp)
-                    .withOffsetSameInstant(ZoneOffset.UTC)
-                    .truncatedTo(ChronoUnit.SECONDS)
-                    .toLocalDateTime();
-        } catch (DateTimeParseException e) {
-            throw new IllegalArgumentException(
-                    "Invalid project.build.outputTimestamp value '" + outputTimestamp + "'", e);
+            for (Artifact artifact : project.getArtifacts()) {
+                File file = artifact.getFile();
+                if (file == null) {
+                    continue;
+                }
+                if (file.isDirectory()) {
+                    // Reactor dependencies are backed by their output directory (e.g. target/classes)
+                    dependencyDirectories.add(file.toPath());
+                } else if (file.isFile() && "jar".equals(artifact.getType())) {
+                    // Only real jars can be opened as archives; skip pom-type (BOM/aggregator) and other non-jar artifacts
+                    dependencyJars.add(new JarFile(file));
+                }
+            }
+
+            // Find concrete local classes that implement the plugin interface
+            List<String> implementations = new ArrayList<>();
+            for (String className : localClasses) {
+                ClassInfo classInfo = classInfoMap.get(className);
+                if (isAbstract(classInfo.access) || isInterface(classInfo.access)) {
+                    continue;
+                }
+                if (implementsInterface(className, pluginInternalName, classInfoMap, dependencyDirectories, dependencyJars)) {
+                    implementations.add(className.replace('/', '.'));
+                }
+            }
+            return implementations;
+        }
+        catch (IOException e) {
+            throw new MojoExecutionException("Could not scan classes", e);
+        }
+        finally {
+            for (JarFile jar : dependencyJars) {
+                try {
+                    jar.close();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }
         }
     }
 
-    private static boolean isImplementation(Class<?> clazz, Class<?> pluginClass) {
-        return pluginClass.isAssignableFrom(clazz)
-                && !isAbstract(clazz.getModifiers())
-                && !isInterface(clazz.getModifiers());
+    private static boolean implementsInterface(
+            String className,
+            String targetInternalName,
+            Map<String, ClassInfo> classInfoMap,
+            List<Path> dependencyDirectories,
+            List<JarFile> dependencyJars)
+            throws IOException {
+        Set<String> visited = new HashSet<>();
+        Queue<String> pending = new ArrayDeque<>();
+        pending.add(className);
+
+        while (!pending.isEmpty()) {
+            String currentClassName = pending.poll();
+            if (!visited.add(currentClassName)) {
+                continue;
+            }
+
+            ClassInfo classInfo = classInfoMap.get(currentClassName);
+            if (classInfo == null) {
+                // Resolve from dependency directories and JARs on demand
+                classInfo = resolveFromDependencies(currentClassName, dependencyDirectories, dependencyJars);
+                if (classInfo != null) {
+                    classInfoMap.put(currentClassName, classInfo);
+                } else {
+                    continue;
+                }
+            }
+
+            if (classInfo.superName != null) {
+                if (classInfo.superName.equals(targetInternalName)) {
+                    return true;
+                }
+                pending.add(classInfo.superName);
+            }
+            for (String interfaceName : classInfo.interfaces) {
+                if (interfaceName.equals(targetInternalName)) {
+                    return true;
+                }
+                pending.add(interfaceName);
+            }
+        }
+        return false;
+    }
+
+    private static ClassInfo resolveFromDependencies(
+            String internalName,
+            List<Path> dependencyDirectories,
+            List<JarFile> dependencyJars)
+            throws IOException {
+        String entryName = internalName + ".class";
+        for (Path directory : dependencyDirectories) {
+            Path classFile = directory.resolve(entryName);
+            if (isRegularFile(classFile)) {
+                return ClassInfo.from(new ClassReader(readAllBytes(classFile)));
+            }
+        }
+        for (JarFile jarFile : dependencyJars) {
+            JarEntry entry = jarFile.getJarEntry(entryName);
+            if (entry != null) {
+                try (InputStream inputStream = jarFile.getInputStream(entry)) {
+                    return ClassInfo.from(new ClassReader(inputStream));
+                }
+            }
+        }
+        return null;
+    }
+
+    private static class ClassInfo {
+        final int access;
+        final String superName;
+        final String[] interfaces;
+
+        static ClassInfo from(ClassReader reader) {
+            return new ClassInfo(reader.getAccess(), reader.getSuperName(), reader.getInterfaces());
+        }
+
+        ClassInfo(int access, String superName, String[] interfaces) {
+            this.access = access;
+            this.superName = superName;
+            this.interfaces = interfaces;
+        }
     }
 }

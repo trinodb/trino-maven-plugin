@@ -2,16 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>io.takari</groupId>
-    <artifactId>takari</artifactId>
-    <version>72</version>
-  </parent>
-
   <groupId>io.trino</groupId>
   <artifactId>trino-maven-plugin</artifactId>
   <version>22-SNAPSHOT</version>
-  <packaging>takari-maven-plugin</packaging>
+  <packaging>maven-plugin</packaging>
 
   <name>Trino Maven Build Extension</name>
   <description>The Trino Maven Plugin provides a packing and lifecycle for Trino plugins</description>
@@ -28,10 +22,13 @@
   </scm>
 
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <mavenVersion>3.9.14</mavenVersion>
+    <!-- Compile against the maven-resolver shipped by the minimum supported Maven (3.9.14) so we never call an
+         API absent from the runtime; the dependency is provided, so the runtime's own copy is used. -->
+    <mavenResolverVersion>1.9.27</mavenResolverVersion>
     <mavenPluginPluginVersion>3.15.2</mavenPluginPluginVersion>
     <junitJupiterVersion>5.14.3</junitJupiterVersion>
-    <provisioVersion>1.1.1</provisioVersion>
     <takari.javaSourceVersion>17</takari.javaSourceVersion>
     <!-- declare language version for IntelliJ IDEA -->
     <maven.compiler.source>${takari.javaSourceVersion}</maven.compiler.source>
@@ -43,23 +40,33 @@
 
   <dependencies>
     <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-plugin-api</artifactId>
       <version>${mavenVersion}</version>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>org.apache.maven.plugin-tools</groupId>
       <artifactId>maven-plugin-annotations</artifactId>
       <version>${mavenPluginPluginVersion}</version>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-core</artifactId>
       <version>${mavenVersion}</version>
       <scope>provided</scope>
     </dependency>
+
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-artifact</artifactId>
@@ -70,14 +77,21 @@
     <dependency>
       <groupId>org.apache.maven.resolver</groupId>
       <artifactId>maven-resolver-api</artifactId>
-      <version>2.0.16</version>
+      <version>${mavenResolverVersion}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
-      <version>4.0.3</version>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-util</artifactId>
+      <version>${mavenResolverVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm</artifactId>
+      <version>9.9.1</version>
     </dependency>
 
     <!-- for testing -->
@@ -123,16 +137,47 @@
       <resource>
         <directory>src/main/resources</directory>
       </resource>
-      <resource>
-        <filtering>true</filtering>
-        <directory>src/main/resources-filtered</directory>
-      </resource>
     </resources>
 
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <version>${mavenPluginPluginVersion}</version>
+      </plugin>
+      <plugin>
+        <groupId>io.takari.maven.plugins</groupId>
+        <artifactId>takari-lifecycle-plugin</artifactId>
+        <version>2.3.2</version>
+        <executions>
+          <execution>
+            <id>testProperties</id>
+            <phase>process-test-resources</phase>
+            <goals>
+              <goal>testProperties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.eclipse.sisu</groupId>
+        <artifactId>sisu-maven-plugin</artifactId>
+        <version>0.9.0.M3</version>
+        <executions>
+          <execution>
+            <id>index-project</id>
+            <goals>
+              <goal>main-index</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <goals>
@@ -141,7 +186,7 @@
             <configuration>
               <rules>
                 <requireJavaVersion>
-                  <version>${takari.javaSourceVersion}</version>
+                  <version>17</version>
                 </requireJavaVersion>
                 <requireMavenVersion>
                   <version>${mavenVersion}</version>
@@ -151,6 +196,7 @@
           </execution>
         </executions>
       </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
