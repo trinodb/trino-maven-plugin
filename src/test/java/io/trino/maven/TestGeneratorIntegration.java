@@ -65,8 +65,8 @@ class TestGeneratorIntegration {
         try (ZipFile zip = new ZipFile(pluginZipFile.toFile())) {
             assertThat(list(zip.entries()))
                     .extracting(ZipEntry::getName)
-                    .contains("transitive-test-scope-1.0/httpclient-4.5.14.jar")
-                    .contains("transitive-test-scope-1.0/commons-logging-1.2.jar");
+                    .contains("transitive-test-scope-1.0/org.apache.httpcomponents_httpclient-4.5.14.jar")
+                    .contains("transitive-test-scope-1.0/commons-logging_commons-logging-1.2.jar");
         }
     }
 

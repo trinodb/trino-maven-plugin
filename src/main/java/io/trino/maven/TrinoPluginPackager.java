@@ -1,5 +1,6 @@
 package io.trino.maven;
 
+import static io.trino.maven.Utils.groupAwareFileName;
 import static io.trino.maven.Utils.parseOutputTimestamp;
 import static java.nio.file.Files.newOutputStream;
 import static java.nio.file.Files.readAllBytes;
@@ -110,8 +111,9 @@ public class TrinoPluginPackager
                 throw new MojoExecutionException(
                         "Runtime dependency %s has no resolved file; the plugin bundle would be incomplete.".formatted(artifact));
             }
-            String entryName = prefix + file.getName();
-            // The flat bundle layout keys entries by file name, so guard against the same file being added twice
+            // Prefix each dependency with its groupId (Provisio's "GA" naming) so two different groupIds that share
+            // the same artifactId and version do not collide on a single flat file name.
+            String entryName = prefix + groupAwareFileName(artifact.getGroupId(), file.getName());
             org.eclipse.aether.artifact.Artifact previous = seenEntries.putIfAbsent(entryName, artifact);
             if (previous != null) {
                 if (!previous.equals(artifact)) {
