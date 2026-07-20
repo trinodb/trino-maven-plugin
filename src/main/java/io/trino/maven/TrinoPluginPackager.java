@@ -6,6 +6,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProjectHelper;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
@@ -14,6 +15,8 @@ import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.DependencyRequest;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.util.filter.ScopeDependencyFilter;
+
+import javax.inject.Inject;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -67,6 +70,9 @@ public class TrinoPluginPackager
     @Parameter(property = "skipPackageTrinoPlugin", defaultValue = "false")
     private boolean skipPackageTrinoPlugin;
 
+    @Inject
+    private MavenProjectHelper projectHelper;
+
     @Override
     public void execute()
             throws MojoExecutionException
@@ -78,6 +84,7 @@ public class TrinoPluginPackager
 
         String prefix = project.getArtifactId() + "-" + project.getVersion() + "/";
         Optional<FileTime> timestamp = parseOutputTimestamp(outputTimestamp);
+        File projectJar = project.getArtifact().getFile();
         writeBundle(collectBundleEntries(prefix), timestamp);
 
         // Set the timestamp on the archive file itself for reproducible builds
@@ -89,6 +96,11 @@ public class TrinoPluginPackager
                 throw new MojoExecutionException("Failed to set timestamp on plugin zip.", e);
             }
         }
+
+        // The trino-plugin artifact handler uses the zip extension, so the main artifact is the plugin bundle. Attach
+        // the classes jar as an additional artifact so it is installed and deployed too: plugin modules are legitimately
+        // compile dependencies (with the default jar type) of other modules.
+        projectHelper.attachArtifact(project, "jar", projectJar);
 
         project.getArtifact().setFile(outputFile);
         if (getLog().isInfoEnabled()) {
