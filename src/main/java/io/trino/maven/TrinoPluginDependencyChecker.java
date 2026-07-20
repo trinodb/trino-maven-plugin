@@ -89,7 +89,10 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
         if (node.getDependency().isOptional()) {
             return;
         }
-        spiDependencies.add(Utils.artifactName(node.getArtifact()));
+        // The set doubles as the visited set: a repeated node means a diamond or a cycle in the graph
+        if (!spiDependencies.add(Utils.artifactName(node.getArtifact()))) {
+            return;
+        }
         for (DependencyNode child : node.getChildren()) {
             collectSpiDependencies(child, spiDependencies);
         }
