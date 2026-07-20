@@ -1,10 +1,5 @@
 package io.trino.maven;
 
-import static io.trino.maven.Utils.aetherArtifact;
-import static io.trino.maven.Utils.artifactName;
-
-import java.util.HashSet;
-import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -17,12 +12,19 @@ import org.eclipse.aether.collection.DependencyCollectionException;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 
-@Mojo(
-        name = "check-spi-dependencies",
+import java.util.HashSet;
+import java.util.Set;
+
+import static io.trino.maven.Utils.aetherArtifact;
+import static io.trino.maven.Utils.artifactName;
+
+@Mojo(name = "check-spi-dependencies",
         defaultPhase = LifecyclePhase.VALIDATE,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         threadSafe = true)
-public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
+public class TrinoPluginDependencyChecker
+        extends BaseTrinoPluginMojo
+{
     @Parameter(defaultValue = "io.trino")
     private String spiGroupId;
 
@@ -36,7 +38,9 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
     private final Set<String> allowedProvidedDependencies = new HashSet<>();
 
     @Override
-    public void execute() throws MojoExecutionException {
+    public void execute()
+            throws MojoExecutionException
+    {
         if (skipCheckSpiDependencies) {
             getLog().info("Skipping SPI dependency checks");
             return;
@@ -52,7 +56,9 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
         }
     }
 
-    private void checkArtifact(Artifact artifact, Set<String> spiDependencies) throws MojoExecutionException {
+    private void checkArtifact(Artifact artifact, Set<String> spiDependencies)
+            throws MojoExecutionException
+    {
         if (isSpiArtifact(artifact)) {
             return;
         }
@@ -77,7 +83,9 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
         }
     }
 
-    private Set<String> getSpiDependencies() throws MojoExecutionException {
+    private Set<String> getSpiDependencies()
+            throws MojoExecutionException
+    {
         Set<String> spiDependencies = new HashSet<>();
         for (DependencyNode child : getArtifactDependencies(getSpiDependency()).getRoot().getChildren()) {
             collectSpiDependencies(child, spiDependencies);
@@ -85,7 +93,8 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
         return spiDependencies;
     }
 
-    private static void collectSpiDependencies(DependencyNode node, Set<String> spiDependencies) {
+    private static void collectSpiDependencies(DependencyNode node, Set<String> spiDependencies)
+    {
         if (node.getDependency().isOptional()) {
             return;
         }
@@ -98,18 +107,23 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
         }
     }
 
-    private CollectResult getArtifactDependencies(Artifact artifact) throws MojoExecutionException {
+    private CollectResult getArtifactDependencies(Artifact artifact)
+            throws MojoExecutionException
+    {
         try {
             Dependency dependency = new Dependency(aetherArtifact(artifact), null);
             return repositorySystem.collectDependencies(
                     repositorySession(),
                     new CollectRequest(dependency, remoteRepositories()));
-        } catch (DependencyCollectionException e) {
+        }
+        catch (DependencyCollectionException e) {
             throw new MojoExecutionException("Failed to resolve dependencies.", e);
         }
     }
 
-    private Artifact getSpiDependency() throws MojoExecutionException {
+    private Artifact getSpiDependency()
+            throws MojoExecutionException
+    {
         for (Artifact artifact : project.getArtifacts()) {
             if (isSpiArtifact(artifact)) {
                 if (!"provided".equals(artifact.getScope())) {
@@ -121,14 +135,16 @@ public class TrinoPluginDependencyChecker extends BaseTrinoPluginMojo {
         throw new MojoExecutionException("Trino plugin must depend on %s.".formatted(spiName()));
     }
 
-    private boolean isSpiArtifact(Artifact artifact) {
+    private boolean isSpiArtifact(Artifact artifact)
+    {
         return spiGroupId.equals(artifact.getGroupId())
                 && spiArtifactId.equals(artifact.getArtifactId())
                 && "jar".equals(artifact.getType())
                 && artifact.getClassifier() == null;
     }
 
-    private String spiName() {
+    private String spiName()
+    {
         return spiGroupId + ":" + spiArtifactId;
     }
 }

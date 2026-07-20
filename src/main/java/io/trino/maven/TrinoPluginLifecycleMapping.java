@@ -1,18 +1,20 @@
 package io.trino.maven;
 
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableMap;
+import org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping;
+import org.apache.maven.lifecycle.mapping.Lifecycle;
+import org.apache.maven.lifecycle.mapping.LifecycleMojo;
+import org.apache.maven.lifecycle.mapping.LifecyclePhase;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping;
-import org.apache.maven.lifecycle.mapping.Lifecycle;
-import org.apache.maven.lifecycle.mapping.LifecycleMojo;
-import org.apache.maven.lifecycle.mapping.LifecyclePhase;
+
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
 
 @Named("trino-plugin")
 @Singleton
@@ -44,7 +46,7 @@ public class TrinoPluginLifecycleMapping
         return lifecycle;
     }
 
-    private static LifecyclePhase phase(String ...goals)
+    private static LifecyclePhase phase(String... goals)
     {
         LifecyclePhase phase = new LifecyclePhase();
         List<LifecycleMojo> mojos = new ArrayList<>();

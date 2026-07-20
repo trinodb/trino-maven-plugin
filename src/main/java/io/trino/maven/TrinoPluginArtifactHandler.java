@@ -1,8 +1,9 @@
 package io.trino.maven;
 
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+
 import javax.inject.Named;
 import javax.inject.Singleton;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 
 @Named("trino-plugin")
 @Singleton

@@ -1,16 +1,12 @@
 package io.trino.maven;
 
-import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.list;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.codehaus.plexus.util.IOUtil.toByteArray;
-
 import io.takari.maven.testing.TestResources5;
 import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenPluginTest;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -18,10 +14,16 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import org.junit.jupiter.api.extension.RegisterExtension;
+
+import static java.lang.String.format;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.list;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.codehaus.plexus.util.IOUtil.toByteArray;
 
 @MavenVersions({"3.9.14"})
-class TestGeneratorIntegration {
+class TestGeneratorIntegration
+{
     private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";
 
     @RegisterExtension
@@ -29,7 +31,9 @@ class TestGeneratorIntegration {
 
     private final MavenRuntime maven;
 
-    TestGeneratorIntegration(MavenRuntimeBuilder mavenBuilder) throws Exception {
+    TestGeneratorIntegration(MavenRuntimeBuilder mavenBuilder)
+            throws Exception
+    {
         String javaVersion = System.getProperty("java.specification.version");
         this.maven = mavenBuilder
                 .withCliOptions(
@@ -38,22 +42,30 @@ class TestGeneratorIntegration {
     }
 
     @MavenPluginTest
-    void testBasic() throws Exception {
+    void testBasic()
+            throws Exception
+    {
         testProjectPackaging("basic", "its.BasicPlugin");
     }
 
     @MavenPluginTest
-    void testAbstractPlugin() throws Exception {
+    void testAbstractPlugin()
+            throws Exception
+    {
         testProjectPackaging("abstract-plugin-class", "its.TestPlugin");
     }
 
     @MavenPluginTest
-    void testInterfacePlugin() throws Exception {
+    void testInterfacePlugin()
+            throws Exception
+    {
         testProjectPackaging("interface-plugin-class", "its.TestPlugin");
     }
 
     @MavenPluginTest
-    void testTransitiveTestScopedDependencyIsBundled() throws Exception {
+    void testTransitiveTestScopedDependencyIsBundled()
+            throws Exception
+    {
         // commons-logging is required transitively by httpclient at runtime, but is declared directly with
         // test scope. It must still be bundled (regression for the dropped io.airlift:log; see MNG-8041).
         File basedir = resources.getBasedir("transitive-test-scope");
@@ -71,7 +83,9 @@ class TestGeneratorIntegration {
     }
 
     @MavenPluginTest
-    void testPomTypeDependencyIsSkipped() throws Exception {
+    void testPomTypeDependencyIsSkipped()
+            throws Exception
+    {
         // A pom-type dependency must not crash the descriptor scan (it is not a JAR) and must not be bundled.
         File basedir = resources.getBasedir("pom-type-dependency");
         maven.forProject(basedir).execute("package").assertErrorFreeLog();
@@ -87,7 +101,9 @@ class TestGeneratorIntegration {
         }
     }
 
-    private void testProjectPackaging(String projectId, String expectedPluginClass) throws Exception {
+    private void testProjectPackaging(String projectId, String expectedPluginClass)
+            throws Exception
+    {
         File basedir = resources.getBasedir(projectId);
         maven.forProject(basedir).execute("package").assertErrorFreeLog();
 
