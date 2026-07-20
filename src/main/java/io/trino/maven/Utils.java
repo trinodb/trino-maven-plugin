@@ -26,6 +26,11 @@ public class Utils
             return Optional.empty();
         }
 
+        // A single non-numeric character disables the timestamp; Maven uses this to override an inherited value
+        if (outputTimestamp.length() == 1 && !Character.isDigit(outputTimestamp.charAt(0))) {
+            return Optional.empty();
+        }
+
         try {
             return Optional.of(FileTime.from(OffsetDateTime.parse(outputTimestamp)
                     .withOffsetSameInstant(UTC)
