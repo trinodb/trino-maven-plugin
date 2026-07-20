@@ -1,17 +1,18 @@
 package io.trino.maven;
 
-import static java.time.ZoneOffset.UTC;
-import static java.time.temporal.ChronoUnit.SECONDS;
-import static java.util.Objects.requireNonNull;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.eclipse.aether.artifact.DefaultArtifact;
 
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.eclipse.aether.artifact.DefaultArtifact;
+
+import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoUnit.SECONDS;
+import static java.util.Objects.requireNonNull;
 
 public class Utils
 {
@@ -55,7 +56,8 @@ public class Utils
         return artifactName(artifact.getGroupId(), artifact.getArtifactId(), artifact.getClassifier());
     }
 
-    public static String artifactName(String groupId, String artifactId, String classifier) {
+    public static String artifactName(String groupId, String artifactId, String classifier)
+    {
         requireNonNull(groupId, "groupId is null");
         requireNonNull(artifactId, "artifactId is null");
         String name = groupId + ":" + artifactId;
@@ -65,7 +67,8 @@ public class Utils
         return name;
     }
 
-    public static org.eclipse.aether.artifact.Artifact aetherArtifact(Artifact artifact) {
+    public static org.eclipse.aether.artifact.Artifact aetherArtifact(Artifact artifact)
+    {
         return new DefaultArtifact(
                 artifact.getGroupId(),
                 artifact.getArtifactId(),

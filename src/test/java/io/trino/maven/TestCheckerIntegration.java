@@ -5,17 +5,21 @@ import io.takari.maven.testing.executor.MavenRuntime;
 import io.takari.maven.testing.executor.MavenRuntime.MavenRuntimeBuilder;
 import io.takari.maven.testing.executor.MavenVersions;
 import io.takari.maven.testing.executor.junit.MavenPluginTest;
-import java.io.File;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.io.File;
+
 @MavenVersions({"3.9.14"})
-class TestCheckerIntegration {
+class TestCheckerIntegration
+{
     @RegisterExtension
     final TestResources5 resources = new TestResources5();
 
     private final MavenRuntime maven;
 
-    TestCheckerIntegration(MavenRuntimeBuilder mavenBuilder) throws Exception {
+    TestCheckerIntegration(MavenRuntimeBuilder mavenBuilder)
+            throws Exception
+    {
         String javaVersion = System.getProperty("java.specification.version");
         this.maven = mavenBuilder
                 .withCliOptions(
@@ -24,25 +28,33 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testBasic() throws Exception {
+    void testBasic()
+            throws Exception
+    {
         File basedir = resources.getBasedir("basic");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
     @MavenPluginTest
-    void testAbstractPluginClass() throws Exception {
+    void testAbstractPluginClass()
+            throws Exception
+    {
         File basedir = resources.getBasedir("abstract-plugin-class");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
     @MavenPluginTest
-    void testInterfacePluginClass() throws Exception {
+    void testInterfacePluginClass()
+            throws Exception
+    {
         File basedir = resources.getBasedir("interface-plugin-class");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
     @MavenPluginTest
-    void testInvalidExtraProvided() throws Exception {
+    void testInvalidExtraProvided()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-extra");
         maven.forProject(basedir)
                 .execute("verify")
@@ -50,19 +62,25 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testExcludedExtraProvided() throws Exception {
+    void testExcludedExtraProvided()
+            throws Exception
+    {
         File basedir = resources.getBasedir("excluded-extra");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
     @MavenPluginTest
-    void testMultipleExcludedExtraProvided() throws Exception {
+    void testMultipleExcludedExtraProvided()
+            throws Exception
+    {
         File basedir = resources.getBasedir("two-excluded-extra");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
     @MavenPluginTest
-    void testInvalidAndExcludedExtraProvided() throws Exception {
+    void testInvalidAndExcludedExtraProvided()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-and-excluded-extra");
         maven.forProject(basedir)
                 .execute("verify")
@@ -72,7 +90,9 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testInvalidMissingProvided() throws Exception {
+    void testInvalidMissingProvided()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-missing");
         maven.forProject(basedir)
                 .execute("verify")
@@ -80,7 +100,9 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testInvalidTrinoMainDependency() throws Exception {
+    void testInvalidTrinoMainDependency()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-trino-main");
         maven.forProject(basedir)
                 .execute("verify")
@@ -88,7 +110,9 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testInvalidProvidedTrinoMainDependency() throws Exception {
+    void testInvalidProvidedTrinoMainDependency()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-provided-trino-main");
         maven.forProject(basedir)
                 .execute("verify")
@@ -96,7 +120,9 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testInvalidRuntimeTrinoMainDependency() throws Exception {
+    void testInvalidRuntimeTrinoMainDependency()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-runtime-trino-main");
         maven.forProject(basedir)
                 .execute("verify")
@@ -104,13 +130,17 @@ class TestCheckerIntegration {
     }
 
     @MavenPluginTest
-    void testTestingScopedTrinoMainDependency() throws Exception {
+    void testTestingScopedTrinoMainDependency()
+            throws Exception
+    {
         File basedir = resources.getBasedir("testing-trino-main");
         maven.forProject(basedir).execute("verify").assertErrorFreeLog();
     }
 
     @MavenPluginTest
-    void testSkip() throws Exception {
+    void testSkip()
+            throws Exception
+    {
         File basedir = resources.getBasedir("invalid-skipped");
         maven.forProject(basedir)
                 .execute("verify")

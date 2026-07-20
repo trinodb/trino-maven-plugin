@@ -1,20 +1,19 @@
 package io.trino.maven;
 
-import static io.trino.maven.Utils.groupAwareFileName;
-import static io.trino.maven.Utils.parseOutputTimestamp;
-import static java.io.OutputStream.nullOutputStream;
-import static java.nio.file.Files.copy;
-import static java.nio.file.Files.newInputStream;
-import static java.nio.file.Files.newOutputStream;
-import static java.nio.file.Files.setLastModifiedTime;
-import static java.nio.file.Files.size;
-import static java.util.Map.entry;
-import static java.util.stream.Collectors.toList;
-import static org.apache.maven.RepositoryUtils.toArtifact;
-import static org.apache.maven.RepositoryUtils.toDependency;
-import static org.eclipse.aether.util.artifact.JavaScopes.PROVIDED;
-import static org.eclipse.aether.util.artifact.JavaScopes.SYSTEM;
-import static org.eclipse.aether.util.artifact.JavaScopes.TEST;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.collection.CollectRequest;
+import org.eclipse.aether.graph.Dependency;
+import org.eclipse.aether.graph.DependencyFilter;
+import org.eclipse.aether.resolution.ArtifactResult;
+import org.eclipse.aether.resolution.DependencyRequest;
+import org.eclipse.aether.resolution.DependencyResolutionException;
+import org.eclipse.aether.util.filter.ScopeDependencyFilter;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -32,23 +31,24 @@ import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.collection.CollectRequest;
-import org.eclipse.aether.graph.Dependency;
-import org.eclipse.aether.graph.DependencyFilter;
-import org.eclipse.aether.resolution.ArtifactResult;
-import org.eclipse.aether.resolution.DependencyRequest;
-import org.eclipse.aether.resolution.DependencyResolutionException;
-import org.eclipse.aether.util.filter.ScopeDependencyFilter;
 
-@Mojo(
-        name = "package-trino-plugin",
+import static io.trino.maven.Utils.groupAwareFileName;
+import static io.trino.maven.Utils.parseOutputTimestamp;
+import static java.io.OutputStream.nullOutputStream;
+import static java.nio.file.Files.copy;
+import static java.nio.file.Files.newInputStream;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.setLastModifiedTime;
+import static java.nio.file.Files.size;
+import static java.util.Map.entry;
+import static java.util.stream.Collectors.toList;
+import static org.apache.maven.RepositoryUtils.toArtifact;
+import static org.apache.maven.RepositoryUtils.toDependency;
+import static org.eclipse.aether.util.artifact.JavaScopes.PROVIDED;
+import static org.eclipse.aether.util.artifact.JavaScopes.SYSTEM;
+import static org.eclipse.aether.util.artifact.JavaScopes.TEST;
+
+@Mojo(name = "package-trino-plugin",
         defaultPhase = LifecyclePhase.PACKAGE,
         requiresDependencyResolution = ResolutionScope.RUNTIME,
         threadSafe = true)
@@ -154,7 +154,7 @@ public class TrinoPluginPackager
             throws MojoExecutionException
     {
         try (OutputStream out = new BufferedOutputStream(newOutputStream(outputFile.toPath()));
-             ZipOutputStream zip = new ZipOutputStream(out)) {
+                ZipOutputStream zip = new ZipOutputStream(out)) {
             zip.setMethod(ZipOutputStream.STORED);
             for (Entry<String, Path> file : filesToAdd) {
                 zip.putNextEntry(storedEntry(file.getKey(), file.getValue(), timestamp));

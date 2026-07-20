@@ -13,16 +13,15 @@
  */
 package io.trino.maven;
 
-import static io.trino.maven.Utils.parseOutputTimestamp;
-import static java.lang.String.join;
-import static java.lang.reflect.Modifier.isAbstract;
-import static java.lang.reflect.Modifier.isInterface;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isDirectory;
-import static java.nio.file.Files.isRegularFile;
-import static java.nio.file.Files.newOutputStream;
-import static java.nio.file.Files.readAllBytes;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,25 +44,28 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Stream;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugins.annotations.LifecyclePhase;
-import org.apache.maven.plugins.annotations.Mojo;
-import org.apache.maven.plugins.annotations.Parameter;
-import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.project.MavenProject;
-import org.objectweb.asm.ClassReader;
+
+import static io.trino.maven.Utils.parseOutputTimestamp;
+import static java.lang.String.join;
+import static java.lang.reflect.Modifier.isAbstract;
+import static java.lang.reflect.Modifier.isInterface;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.exists;
+import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.isRegularFile;
+import static java.nio.file.Files.newOutputStream;
+import static java.nio.file.Files.readAllBytes;
 
 /**
  * Mojo that generates the service descriptor JAR for Trino plugins.
  */
-@Mojo(
-        name = "generate-service-descriptor",
+@Mojo(name = "generate-service-descriptor",
         defaultPhase = LifecyclePhase.PACKAGE,
         requiresDependencyResolution = ResolutionScope.COMPILE,
         threadSafe = true)
-public class ServiceDescriptorGenerator extends AbstractMojo {
+public class ServiceDescriptorGenerator
+        extends AbstractMojo
+{
     @Parameter(defaultValue = "io.trino.spi.Plugin")
     private String pluginClassName;
 
@@ -83,7 +85,9 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     private MavenProject project;
 
     @Override
-    public void execute() throws MojoExecutionException {
+    public void execute()
+            throws MojoExecutionException
+    {
         Path servicesFile = Path.of(servicesDirectory, pluginClassName);
         Optional<FileTime> outputTimestamp = parseOutputTimestamp(this.outputTimestamp);
         if (exists(servicesFile)) {
@@ -105,13 +109,13 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
         byte[] servicesFileData = (implementationName + "\n").getBytes(UTF_8);
         try (OutputStream out = newOutputStream(Path.of(servicesJar));
                 JarOutputStream jar = new JarOutputStream(out)) {
-
             JarEntry jarEntry = new JarEntry("META-INF/services/" + pluginClassName);
             outputTimestamp.ifPresent(jarEntry::setLastModifiedTime);
             jar.putNextEntry(jarEntry);
             jar.write(servicesFileData);
             jar.closeEntry();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new MojoExecutionException("Failed to write services JAR file.", e);
         }
         if (getLog().isInfoEnabled()) {
@@ -119,7 +123,9 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
         }
     }
 
-    private List<String> findPluginImplementations() throws MojoExecutionException {
+    private List<String> findPluginImplementations()
+            throws MojoExecutionException
+    {
         Path classesRoot = Path.of(classesDirectory);
         if (!isDirectory(classesRoot)) {
             return List.of();
@@ -146,7 +152,9 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
     /**
      * Reads every compiled class in the output directory, recording its hierarchy straight from the bytecode.
      */
-    private static Map<String, ClassInfo> scanLocalClasses(Path classesRoot) throws MojoExecutionException {
+    private static Map<String, ClassInfo> scanLocalClasses(Path classesRoot)
+            throws MojoExecutionException
+    {
         Map<String, ClassInfo> classInfoMap = new HashMap<>();
         try (Stream<Path> paths = Files.walk(classesRoot)) {
             for (Path classFile : paths.filter(path -> path.toString().endsWith(".class")).toList()) {
@@ -166,7 +174,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
      * archives, so pom-type (BOM/aggregator) and other non-jar artifacts are skipped.
      */
     private void openDependencyArchives(List<Path> dependencyDirectories, List<JarFile> dependencyJars)
-            throws IOException {
+            throws IOException
+    {
         for (Artifact artifact : project.getArtifacts()) {
             File file = artifact.getFile();
             if (file == null) {
@@ -174,7 +183,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
             }
             if (file.isDirectory()) {
                 dependencyDirectories.add(file.toPath());
-            } else if (file.isFile() && "jar".equals(artifact.getType())) {
+            }
+            else if (file.isFile() && "jar".equals(artifact.getType())) {
                 dependencyJars.add(new JarFile(file));
             }
         }
@@ -189,7 +199,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
             Map<String, ClassInfo> classInfoMap,
             List<Path> dependencyDirectories,
             List<JarFile> dependencyJars)
-            throws IOException {
+            throws IOException
+    {
         String pluginInternalName = pluginClassName.replace('.', '/');
         List<String> implementations = new ArrayList<>();
         for (String className : localClasses) {
@@ -204,11 +215,13 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
         return implementations;
     }
 
-    private static void closeAll(List<JarFile> dependencyJars) {
+    private static void closeAll(List<JarFile> dependencyJars)
+    {
         for (JarFile jar : dependencyJars) {
             try {
                 jar.close();
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
@@ -220,7 +233,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
             Map<String, ClassInfo> classInfoMap,
             List<Path> dependencyDirectories,
             List<JarFile> dependencyJars)
-            throws IOException {
+            throws IOException
+    {
         Set<String> visited = new HashSet<>();
         Queue<String> pending = new ArrayDeque<>();
         pending.add(className);
@@ -237,7 +251,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
                 classInfo = resolveFromDependencies(currentClassName, dependencyDirectories, dependencyJars);
                 if (classInfo != null) {
                     classInfoMap.put(currentClassName, classInfo);
-                } else {
+                }
+                else {
                     continue;
                 }
             }
@@ -262,7 +277,8 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
             String internalName,
             List<Path> dependencyDirectories,
             List<JarFile> dependencyJars)
-            throws IOException {
+            throws IOException
+    {
         String entryName = internalName + ".class";
         for (Path directory : dependencyDirectories) {
             Path classFile = directory.resolve(entryName);
@@ -281,16 +297,19 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
         return null;
     }
 
-    private static class ClassInfo {
+    private static class ClassInfo
+    {
         final int access;
         final String superName;
         final String[] interfaces;
 
-        static ClassInfo from(ClassReader reader) {
+        static ClassInfo from(ClassReader reader)
+        {
             return new ClassInfo(reader.getAccess(), reader.getSuperName(), reader.getInterfaces());
         }
 
-        ClassInfo(int access, String superName, String[] interfaces) {
+        ClassInfo(int access, String superName, String[] interfaces)
+        {
             this.access = access;
             this.superName = superName;
             this.interfaces = interfaces;
