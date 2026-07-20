@@ -21,7 +21,7 @@ import static java.util.Collections.list;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.codehaus.plexus.util.IOUtil.toByteArray;
 
-@MavenVersions({"3.9.14"})
+@MavenVersions("3.9.14")
 class TestGeneratorIntegration
 {
     private static final String DESCRIPTOR = "META-INF/services/io.trino.spi.Plugin";

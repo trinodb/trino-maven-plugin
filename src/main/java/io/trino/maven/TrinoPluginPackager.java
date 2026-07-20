@@ -83,7 +83,7 @@ public class TrinoPluginPackager
         // Set the timestamp on the archive file itself for reproducible builds
         if (timestamp.isPresent()) {
             try {
-                setLastModifiedTime(outputFile.toPath(), timestamp.get());
+                setLastModifiedTime(outputFile.toPath(), timestamp.orElseThrow());
             }
             catch (IOException e) {
                 throw new MojoExecutionException("Failed to set timestamp on plugin zip.", e);
