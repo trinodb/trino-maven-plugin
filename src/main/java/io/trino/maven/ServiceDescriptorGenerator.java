@@ -125,64 +125,91 @@ public class ServiceDescriptorGenerator extends AbstractMojo {
             return List.of();
         }
 
-        String pluginInternalName = pluginClassName.replace('.', '/');
+        Map<String, ClassInfo> classInfoMap = scanLocalClasses(classesRoot);
+        Set<String> localClasses = Set.copyOf(classInfoMap.keySet());
 
-        // Scan all local class files and extract hierarchy info by reading the bytecode
-        Map<String, ClassInfo> classInfoMap = new HashMap<>();
-        Set<String> localClasses = new HashSet<>();
-        try (Stream<Path> paths = Files.walk(classesRoot)) {
-            for (Path classFile : paths.filter(path -> path.toString().endsWith(".class")).toList()) {
-                ClassReader reader = new ClassReader(readAllBytes(classFile));
-                classInfoMap.put(reader.getClassName(), ClassInfo.from(reader));
-                localClasses.add(reader.getClassName());
-            }
-        }
-        catch (IOException e) {
-            throw new MojoExecutionException("Could not walk class hierarchy", e);
-        }
-
-        // Open dependency JARs once and keep them open for the duration of the scan;
-        // reactor dependencies may be backed by directories (target/classes) instead of JARs
+        // The lists are filled in by the callee so that anything already opened is still closed if it fails part way
         List<Path> dependencyDirectories = new ArrayList<>();
         List<JarFile> dependencyJars = new ArrayList<>();
         try {
-            for (Artifact artifact : project.getArtifacts()) {
-                File file = artifact.getFile();
-                if (file == null) {
-                    continue;
-                }
-                if (file.isDirectory()) {
-                    // Reactor dependencies are backed by their output directory (e.g. target/classes)
-                    dependencyDirectories.add(file.toPath());
-                } else if (file.isFile() && "jar".equals(artifact.getType())) {
-                    // Only real jars can be opened as archives; skip pom-type (BOM/aggregator) and other non-jar artifacts
-                    dependencyJars.add(new JarFile(file));
-                }
-            }
-
-            // Find concrete local classes that implement the plugin interface
-            List<String> implementations = new ArrayList<>();
-            for (String className : localClasses) {
-                ClassInfo classInfo = classInfoMap.get(className);
-                if (isAbstract(classInfo.access) || isInterface(classInfo.access)) {
-                    continue;
-                }
-                if (implementsInterface(className, pluginInternalName, classInfoMap, dependencyDirectories, dependencyJars)) {
-                    implementations.add(className.replace('/', '.'));
-                }
-            }
-            return implementations;
+            openDependencyArchives(dependencyDirectories, dependencyJars);
+            return findConcreteImplementations(localClasses, classInfoMap, dependencyDirectories, dependencyJars);
         }
         catch (IOException e) {
             throw new MojoExecutionException("Could not scan classes", e);
         }
         finally {
-            for (JarFile jar : dependencyJars) {
-                try {
-                    jar.close();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
+            closeAll(dependencyJars);
+        }
+    }
+
+    /**
+     * Reads every compiled class in the output directory, recording its hierarchy straight from the bytecode.
+     */
+    private static Map<String, ClassInfo> scanLocalClasses(Path classesRoot) throws MojoExecutionException {
+        Map<String, ClassInfo> classInfoMap = new HashMap<>();
+        try (Stream<Path> paths = Files.walk(classesRoot)) {
+            for (Path classFile : paths.filter(path -> path.toString().endsWith(".class")).toList()) {
+                ClassReader reader = new ClassReader(readAllBytes(classFile));
+                classInfoMap.put(reader.getClassName(), ClassInfo.from(reader));
+            }
+        }
+        catch (IOException e) {
+            throw new MojoExecutionException("Could not walk class hierarchy", e);
+        }
+        return classInfoMap;
+    }
+
+    /**
+     * Opens the dependency archives once, to be kept open for the duration of the scan. Reactor dependencies are
+     * backed by their output directory (e.g. target/classes) rather than a jar, and only real jars can be opened as
+     * archives, so pom-type (BOM/aggregator) and other non-jar artifacts are skipped.
+     */
+    private void openDependencyArchives(List<Path> dependencyDirectories, List<JarFile> dependencyJars)
+            throws IOException {
+        for (Artifact artifact : project.getArtifacts()) {
+            File file = artifact.getFile();
+            if (file == null) {
+                continue;
+            }
+            if (file.isDirectory()) {
+                dependencyDirectories.add(file.toPath());
+            } else if (file.isFile() && "jar".equals(artifact.getType())) {
+                dependencyJars.add(new JarFile(file));
+            }
+        }
+    }
+
+    /**
+     * Returns the local classes that can be instantiated as the plugin, i.e. those that are neither abstract nor an
+     * interface and that reach the plugin interface through their hierarchy.
+     */
+    private List<String> findConcreteImplementations(
+            Set<String> localClasses,
+            Map<String, ClassInfo> classInfoMap,
+            List<Path> dependencyDirectories,
+            List<JarFile> dependencyJars)
+            throws IOException {
+        String pluginInternalName = pluginClassName.replace('.', '/');
+        List<String> implementations = new ArrayList<>();
+        for (String className : localClasses) {
+            ClassInfo classInfo = classInfoMap.get(className);
+            if (isAbstract(classInfo.access) || isInterface(classInfo.access)) {
+                continue;
+            }
+            if (implementsInterface(className, pluginInternalName, classInfoMap, dependencyDirectories, dependencyJars)) {
+                implementations.add(className.replace('/', '.'));
+            }
+        }
+        return implementations;
+    }
+
+    private static void closeAll(List<JarFile> dependencyJars) {
+        for (JarFile jar : dependencyJars) {
+            try {
+                jar.close();
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
         }
     }
