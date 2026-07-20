@@ -64,10 +64,18 @@ public class TrinoPluginPackager
     @Parameter(defaultValue = "${project.build.outputTimestamp}")
     private String outputTimestamp;
 
+    @Parameter(property = "skipPackageTrinoPlugin", defaultValue = "false")
+    private boolean skipPackageTrinoPlugin;
+
     @Override
     public void execute()
             throws MojoExecutionException
     {
+        if (skipPackageTrinoPlugin) {
+            getLog().info("Skipping Trino plugin packaging");
+            return;
+        }
+
         String prefix = project.getArtifactId() + "-" + project.getVersion() + "/";
         Optional<FileTime> timestamp = parseOutputTimestamp(outputTimestamp);
         writeBundle(collectBundleEntries(prefix), timestamp);
