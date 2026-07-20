@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.trino.maven.its</groupId>
+    <artifactId>transitive-test-scope</artifactId>
+    <version>1.0</version>
+    <packaging>trino-plugin</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-spi</artifactId>
+            <version>351</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- httpclient requires commons-logging at runtime (transitive compile dependency) -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+        </dependency>
+
+        <!-- commons-logging is also declared directly with test scope. Maven's nearest-wins makes the test
+             scope mask the transitive compile need, but it must still be bundled because httpclient needs it
+             at runtime (see MNG-8041). This is the regression that dropped io.airlift:log from connectors. -->
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.trino</groupId>
+                <artifactId>trino-maven-plugin</artifactId>
+                <version>${it-plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <!-- this test targets bundling; the SPI check needs Guava on the plugin realm, which the
+                         takari test harness does not provide (real Maven does) -->
+                    <skipCheckSpiDependencies>true</skipCheckSpiDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

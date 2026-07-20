@@ -52,6 +52,41 @@ class TestGeneratorIntegration {
         testProjectPackaging("interface-plugin-class", "its.TestPlugin");
     }
 
+    @MavenPluginTest
+    void testTransitiveTestScopedDependencyIsBundled() throws Exception {
+        // commons-logging is required transitively by httpclient at runtime, but is declared directly with
+        // test scope. It must still be bundled (regression for the dropped io.airlift:log; see MNG-8041).
+        File basedir = resources.getBasedir("transitive-test-scope");
+        maven.forProject(basedir).execute("package").assertErrorFreeLog();
+
+        Path pluginZipFile = basedir.toPath().resolve("target/transitive-test-scope-1.0.zip");
+        assertThat(pluginZipFile).isRegularFile();
+
+        try (ZipFile zip = new ZipFile(pluginZipFile.toFile())) {
+            assertThat(list(zip.entries()))
+                    .extracting(ZipEntry::getName)
+                    .contains("transitive-test-scope-1.0/httpclient-4.5.14.jar")
+                    .contains("transitive-test-scope-1.0/commons-logging-1.2.jar");
+        }
+    }
+
+    @MavenPluginTest
+    void testPomTypeDependencyIsSkipped() throws Exception {
+        // A pom-type dependency must not crash the descriptor scan (it is not a JAR) and must not be bundled.
+        File basedir = resources.getBasedir("pom-type-dependency");
+        maven.forProject(basedir).execute("package").assertErrorFreeLog();
+
+        Path pluginZipFile = basedir.toPath().resolve("target/pom-type-dependency-1.0.zip");
+        assertThat(pluginZipFile).isRegularFile();
+
+        try (ZipFile zip = new ZipFile(pluginZipFile.toFile())) {
+            assertThat(list(zip.entries()))
+                    .extracting(ZipEntry::getName)
+                    .contains("pom-type-dependency-1.0/pom-type-dependency-1.0.jar")
+                    .noneMatch(name -> name.endsWith(".pom"));
+        }
+    }
+
     private void testProjectPackaging(String projectId, String expectedPluginClass) throws Exception {
         File basedir = resources.getBasedir(projectId);
         maven.forProject(basedir).execute("package").assertErrorFreeLog();

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.trino.maven.its</groupId>
+    <artifactId>pom-type-dependency</artifactId>
+    <version>1.0</version>
+    <packaging>trino-plugin</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.trino</groupId>
+            <artifactId>trino-spi</artifactId>
+            <version>351</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- A pom-type (aggregator/BOM) dependency. Its resolved artifact is a .pom file, which must not be
+             opened as a JAR while scanning for the Plugin implementation, and must not be bundled in the zip
+             (bundling it caused a duplicate-entry failure with real aggregator poms like graalvm js-community). -->
+        <dependency>
+            <groupId>org.junit</groupId>
+            <artifactId>junit-bom</artifactId>
+            <version>5.11.2</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.trino</groupId>
+                <artifactId>trino-maven-plugin</artifactId>
+                <version>${it-plugin.version}</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <!-- this test targets bundling; the SPI check needs Guava on the plugin realm, which the
+                         takari test harness does not provide (real Maven does) -->
+                    <skipCheckSpiDependencies>true</skipCheckSpiDependencies>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
