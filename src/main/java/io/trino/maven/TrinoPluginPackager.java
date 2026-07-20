@@ -2,12 +2,13 @@ package io.trino.maven;
 
 import static io.trino.maven.Utils.groupAwareFileName;
 import static io.trino.maven.Utils.parseOutputTimestamp;
+import static java.io.OutputStream.nullOutputStream;
+import static java.nio.file.Files.copy;
+import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.newOutputStream;
-import static java.nio.file.Files.readAllBytes;
 import static java.nio.file.Files.setLastModifiedTime;
+import static java.nio.file.Files.size;
 import static java.util.Map.entry;
-import static java.util.Objects.requireNonNull;
-import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static java.util.stream.Collectors.toList;
 import static org.apache.maven.RepositoryUtils.toArtifact;
 import static org.apache.maven.RepositoryUtils.toDependency;
@@ -19,7 +20,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
@@ -28,9 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.zip.CRC32;
+import java.util.zip.CheckedInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.apache.maven.artifact.Artifact;
@@ -146,39 +145,17 @@ public class TrinoPluginPackager
     private void writeBundle(List<Entry<String, Path>> filesToAdd, Optional<FileTime> timestamp)
             throws MojoExecutionException
     {
-        List<CompletableFuture<PreparedEntry>> futures = new ArrayList<>();
-        for (Entry<String, Path> entry : filesToAdd) {
-            futures.add(supplyAsync(() -> {
-                try {
-                    byte[] data = readAllBytes(entry.getValue());
-                    return new PreparedEntry(prepareStoredEntry(entry.getKey(), data, timestamp), data);
-                }
-                catch (IOException e) {
-                    throw new UncheckedIOException("Failed to read file: " + entry.getValue(), e);
-                }
-            }));
-        }
-
         try (OutputStream out = new BufferedOutputStream(newOutputStream(outputFile.toPath()));
              ZipOutputStream zip = new ZipOutputStream(out)) {
             zip.setMethod(ZipOutputStream.STORED);
-            for (int i = 0; i < futures.size(); i++) {
-                // Clear the slot so the data can be garbage collected once written
-                PreparedEntry prepared = futures.set(i, null).get();
-                zip.putNextEntry(prepared.entry);
-                zip.write(prepared.data);
+            for (Entry<String, Path> file : filesToAdd) {
+                zip.putNextEntry(storedEntry(file.getKey(), file.getValue(), timestamp));
+                copy(file.getValue(), zip);
                 zip.closeEntry();
             }
         }
         catch (IOException e) {
             throw new MojoExecutionException("Failed to create plugin zip.", e);
-        }
-        catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MojoExecutionException("Interrupted while creating plugin zip.", e);
-        }
-        catch (ExecutionException e) {
-            throw new MojoExecutionException("Failed to prepare zip entry.", e.getCause());
         }
     }
 
@@ -231,25 +208,31 @@ public class TrinoPluginPackager
         }
     }
 
-    private static ZipEntry prepareStoredEntry(String entryName, byte[] data, Optional<FileTime> fileTime)
+    /**
+     * Builds a {@code STORED} (uncompressed) entry. The zip format requires the size and CRC of a stored entry to be
+     * known before its data is written, so the file is streamed once here to checksum it and once again by the caller
+     * to copy it. Streaming twice keeps memory flat no matter how large the bundle is; the jars are already compressed,
+     * so storing them verbatim avoids pointlessly recompressing them.
+     */
+    private static ZipEntry storedEntry(String entryName, Path file, Optional<FileTime> fileTime)
+            throws IOException
     {
-        CRC32 crc = new CRC32();
-        crc.update(data);
-
+        long fileSize = size(file);
         ZipEntry entry = new ZipEntry(entryName);
         entry.setMethod(ZipEntry.STORED);
-        entry.setSize(data.length);
-        entry.setCompressedSize(data.length);
-        entry.setCrc(crc.getValue());
+        entry.setSize(fileSize);
+        entry.setCompressedSize(fileSize);
+        entry.setCrc(checksum(file));
         fileTime.ifPresent(entry::setLastModifiedTime);
         return entry;
     }
 
-    private record PreparedEntry(ZipEntry entry, byte[] data)
+    private static long checksum(Path file)
+            throws IOException
     {
-        public PreparedEntry
-        {
-            requireNonNull(entry, "entry is null");
+        try (CheckedInputStream in = new CheckedInputStream(newInputStream(file), new CRC32())) {
+            in.transferTo(nullOutputStream());
+            return in.getChecksum().getValue();
         }
     }
 }
