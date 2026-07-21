@@ -10,7 +10,7 @@
 
     <groupId>io.trino</groupId>
     <artifactId>trino-maven-plugin</artifactId>
-    <version>24-SNAPSHOT</version>
+    <version>24</version>
     <packaging>maven-plugin</packaging>
 
     <name>Trino Maven Build Extension</name>
@@ -34,7 +34,7 @@
     <scm>
         <connection>scm:git:https://github.com/trinodb/trino-maven-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:trinodb/trino-maven-plugin.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>trino-maven-plugin-24</tag>
         <url>https://github.com/trinodb/trino-maven-plugin</url>
     </scm>
 
