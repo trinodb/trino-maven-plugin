@@ -70,6 +70,15 @@ public class TrinoPluginPackager
     @Parameter(property = "skipPackageTrinoPlugin", defaultValue = "false")
     private boolean skipPackageTrinoPlugin;
 
+    /**
+     * Whether to deflate the bundle entries. Off by default: the bundled jars are themselves compressed archives, so
+     * deflating them again only recovers the parts that are not, namely their central directories, {@code META-INF}
+     * text and any entries the jar itself stored verbatim. That is worth roughly a tenth of the bundle, paid for with
+     * compression time on every build. Enable it to trade a slower package phase for smaller bundles.
+     */
+    @Parameter(property = "trino.plugin.compressed", defaultValue = "false")
+    private boolean compress;
+
     @Inject
     private MavenProjectHelper projectHelper;
 
@@ -167,9 +176,9 @@ public class TrinoPluginPackager
     {
         try (OutputStream out = new BufferedOutputStream(newOutputStream(outputFile.toPath()));
                 ZipOutputStream zip = new ZipOutputStream(out)) {
-            zip.setMethod(ZipOutputStream.STORED);
+            zip.setMethod(compress ? ZipOutputStream.DEFLATED : ZipOutputStream.STORED);
             for (Entry<String, Path> file : filesToAdd) {
-                zip.putNextEntry(storedEntry(file.getKey(), file.getValue(), timestamp));
+                zip.putNextEntry(bundleEntry(file.getKey(), file.getValue(), timestamp));
                 copy(file.getValue(), zip);
                 zip.closeEntry();
             }
@@ -229,21 +238,25 @@ public class TrinoPluginPackager
     }
 
     /**
-     * Builds a {@code STORED} (uncompressed) entry. The zip format requires the size and CRC of a stored entry to be
-     * known before its data is written, so the file is streamed once here to checksum it and once again by the caller
-     * to copy it. Streaming twice keeps memory flat no matter how large the bundle is; the jars are already compressed,
-     * so storing them verbatim avoids pointlessly recompressing them.
+     * Builds the entry header. A {@code DEFLATED} entry needs nothing up front, because {@link ZipOutputStream} sizes
+     * and checksums it while the data streams through. A {@code STORED} entry does: the zip format requires its size
+     * and CRC before its data is written, so the file is streamed once here to checksum it and once again by the caller
+     * to copy it. Streaming twice keeps memory flat no matter how large the bundle is.
      */
-    private static ZipEntry storedEntry(String entryName, Path file, Optional<FileTime> fileTime)
+    private ZipEntry bundleEntry(String entryName, Path file, Optional<FileTime> fileTime)
             throws IOException
     {
-        long fileSize = size(file);
         ZipEntry entry = new ZipEntry(entryName);
+        fileTime.ifPresent(entry::setLastModifiedTime);
+        if (compress) {
+            entry.setMethod(ZipEntry.DEFLATED);
+            return entry;
+        }
+        long fileSize = size(file);
         entry.setMethod(ZipEntry.STORED);
         entry.setSize(fileSize);
         entry.setCompressedSize(fileSize);
         entry.setCrc(checksum(file));
-        fileTime.ifPresent(entry::setLastModifiedTime);
         return entry;
     }
 

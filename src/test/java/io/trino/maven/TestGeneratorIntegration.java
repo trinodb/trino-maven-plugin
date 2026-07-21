@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
@@ -124,6 +125,38 @@ class TestGeneratorIntegration
 
         assertThat(installDirectory.resolve("basic-1.0.zip")).isRegularFile();
         assertThat(installDirectory.resolve("basic-1.0.jar")).isRegularFile();
+    }
+
+    @MavenPluginTest
+    void testBundleIsStoredByDefault()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("basic");
+        maven.forProject(basedir).execute("package").assertErrorFreeLog();
+
+        assertThat(bundleEntryMethods(basedir, "basic")).containsOnly(ZipEntry.STORED);
+    }
+
+    @MavenPluginTest
+    void testBundleCompressionCanBeEnabled()
+            throws Exception
+    {
+        File basedir = resources.getBasedir("basic");
+        maven.forProject(basedir)
+                .withCliOption("-Dtrino.plugin.compressed=true")
+                .execute("package")
+                .assertErrorFreeLog();
+
+        assertThat(bundleEntryMethods(basedir, "basic")).containsOnly(ZipEntry.DEFLATED);
+    }
+
+    private static List<Integer> bundleEntryMethods(File basedir, String projectId)
+            throws IOException
+    {
+        Path pluginZipFile = basedir.toPath().resolve(format("target/%s-1.0.zip", projectId));
+        try (ZipFile zip = new ZipFile(pluginZipFile.toFile())) {
+            return list(zip.entries()).stream().map(ZipEntry::getMethod).toList();
+        }
     }
 
     private static void deleteRecursively(Path directory)
