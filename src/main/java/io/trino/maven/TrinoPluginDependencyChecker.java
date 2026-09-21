@@ -19,7 +19,7 @@ import static io.trino.maven.Utils.aetherArtifact;
 import static io.trino.maven.Utils.artifactName;
 
 @Mojo(name = "check-spi-dependencies",
-        defaultPhase = LifecyclePhase.VALIDATE,
+        defaultPhase = LifecyclePhase.PACKAGE,
         requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME,
         threadSafe = true)
 public class TrinoPluginDependencyChecker
