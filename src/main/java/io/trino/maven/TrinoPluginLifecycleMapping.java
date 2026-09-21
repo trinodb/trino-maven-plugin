@@ -29,14 +29,16 @@ public class TrinoPluginLifecycleMapping
     private static Lifecycle defaultLifecycle()
     {
         Map<String, LifecyclePhase> phases = new LinkedHashMap<>();
-        phases.put("validate", phase("io.trino:trino-maven-plugin:check-spi-dependencies"));
         phases.put("process-resources", phase("org.apache.maven.plugins:maven-resources-plugin:resources"));
         phases.put("compile", phase("org.apache.maven.plugins:maven-compiler-plugin:compile"));
         phases.put("process-classes", phase("io.trino:trino-maven-plugin:generate-service-descriptor"));
         phases.put("process-test-resources", phase("org.apache.maven.plugins:maven-resources-plugin:testResources"));
         phases.put("test-compile", phase("org.apache.maven.plugins:maven-compiler-plugin:testCompile"));
         phases.put("test", phase("org.apache.maven.plugins:maven-surefire-plugin:test"));
-        phases.put("package", phase("org.apache.maven.plugins:maven-jar-plugin:jar", "io.trino:trino-maven-plugin:package-trino-plugin"));
+        phases.put("package", phase(
+                "io.trino:trino-maven-plugin:check-spi-dependencies",
+                "org.apache.maven.plugins:maven-jar-plugin:jar",
+                "io.trino:trino-maven-plugin:package-trino-plugin"));
         phases.put("install", phase("org.apache.maven.plugins:maven-install-plugin:install"));
         phases.put("deploy", phase("org.apache.maven.plugins:maven-deploy-plugin:deploy"));
 
