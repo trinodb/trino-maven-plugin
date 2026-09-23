@@ -91,6 +91,29 @@ class TestGeneratorIntegration
     }
 
     @MavenPluginTest
+    void testTransitiveSpiDependenciesAreNotBundled()
+            throws Exception
+    {
+        // trino-array pulls in trino-spi and its dependencies with compile scope; the server provides them at runtime
+        File basedir = resources.getBasedir("transitive-spi");
+        maven.forProject(basedir).execute("package").assertErrorFreeLog();
+
+        Path pluginZipFile = basedir.toPath().resolve("target/transitive-spi-1.0.zip");
+        assertThat(pluginZipFile).isRegularFile();
+
+        try (ZipFile zip = new ZipFile(pluginZipFile.toFile())) {
+            assertThat(list(zip.entries()))
+                    .extracting(ZipEntry::getName)
+                    .contains("transitive-spi-1.0/io.trino_trino-array-351.jar")
+                    .anyMatch(name -> name.startsWith("transitive-spi-1.0/it.unimi.dsi_fastutil-"))
+                    .noneMatch(name -> name.contains("trino-spi"))
+                    .noneMatch(name -> name.contains("io.airlift_slice-"))
+                    .noneMatch(name -> name.contains("jol-core"))
+                    .noneMatch(name -> name.contains("jackson-annotations"));
+        }
+    }
+
+    @MavenPluginTest
     void testPomTypeDependencyIsSkipped()
             throws Exception
     {
