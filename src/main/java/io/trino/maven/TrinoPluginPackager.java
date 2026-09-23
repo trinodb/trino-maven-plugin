@@ -8,6 +8,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProjectHelper;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
@@ -26,15 +27,18 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.zip.CRC32;
 import java.util.zip.CheckedInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static io.trino.maven.Utils.artifactName;
 import static io.trino.maven.Utils.groupAwareFileName;
 import static io.trino.maven.Utils.parseOutputTimestamp;
 import static java.io.OutputStream.nullOutputStream;
@@ -118,8 +122,8 @@ public class TrinoPluginPackager
     }
 
     /**
-     * Collects the files to bundle, keyed by their flat entry name: the runtime classpath jars plus the main project
-     * jar and the generated services jar.
+     * Collects the files to bundle, keyed by their flat entry name: the runtime classpath jars, except the SPI and its
+     * dependencies, plus the main project jar and the generated services jar.
      */
     private List<Entry<String, Path>> collectBundleEntries(String prefix)
             throws MojoExecutionException
@@ -127,11 +131,20 @@ public class TrinoPluginPackager
         // entryName -> filePath
         List<Entry<String, Path>> filesToAdd = new ArrayList<>();
 
+        Set<String> spiArtifacts = spiArtifacts();
+
         // Collect runtime classpath artifacts (same logic as Provisio's getRuntimeClasspathAsArtifactSet)
         Map<String, org.eclipse.aether.artifact.Artifact> seenEntries = new HashMap<>();
         for (org.eclipse.aether.artifact.Artifact artifact : resolveRuntimeScopeTransitively()) {
             // Skip pom-type artifacts (e.g. aggregator/BOM dependencies); only real classpath jars belong in the bundle
             if ("pom".equals(artifact.getExtension())) {
+                continue;
+            }
+            // The server provides the SPI to every plugin. It still reaches the runtime classpath when a runtime
+            // dependency declares it with compile scope, because the plugin's own provided declaration is dropped
+            // before collection and no longer wins mediation.
+            if (spiArtifacts.contains(artifactName(artifact))) {
+                getLog().debug("Not bundling SPI artifact " + artifact);
                 continue;
             }
             File file = artifact.getFile();
@@ -169,6 +182,28 @@ public class TrinoPluginPackager
         filesToAdd.add(entry(prefix + servicesJar.getName(), servicesJar.toPath()));
 
         return filesToAdd;
+    }
+
+    /**
+     * Returns the names of the SPI artifact and its dependencies, based on the plugin's direct SPI declaration, or an
+     * empty set if the plugin does not declare the SPI (which {@code check-spi-dependencies} rejects).
+     */
+    private Set<String> spiArtifacts()
+            throws MojoExecutionException
+    {
+        for (org.apache.maven.model.Dependency dependency : project.getDependencies()) {
+            if (isSpiArtifact(dependency.getGroupId(), dependency.getArtifactId(), dependency.getType(), dependency.getClassifier())) {
+                Set<String> spiArtifacts = new HashSet<>(spiDependencies(new DefaultArtifact(
+                        dependency.getGroupId(),
+                        dependency.getArtifactId(),
+                        dependency.getClassifier(),
+                        dependency.getType(),
+                        dependency.getVersion())));
+                spiArtifacts.add(spiName());
+                return spiArtifacts;
+            }
+        }
+        return Set.of();
     }
 
     private void writeBundle(List<Entry<String, Path>> filesToAdd, Optional<FileTime> timestamp)
